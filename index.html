@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>حاسبة أداء الكول سنتر - أحمد</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; width: 350px; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        #result { margin-top: 20px; text-align: right; background: #e9ecef; padding: 10px; border-radius: 5px; display: none; }
+        .green { color: green; font-weight: bold; }
+        .red { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>حاسبة AHT (Personalshop)</h3>
+        <input type="text" id="t1" placeholder="توقيت 1 (HH:MM:SS)" value="00:00:00">
+        <input type="text" id="t2" placeholder="توقيت 2 (HH:MM:SS)" value="00:00:00">
+        <input type="text" id="t3" placeholder="توقيت 3 (HH:MM:SS)" value="00:00:00">
+        <input type="text" id="t4" placeholder="توقيت 4 (HH:MM:SS)" value="00:00:00">
+        <input type="number" id="calls" placeholder="عدد المكالمات">
+        <button onclick="calculate()">احسب النتيجة</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function toSeconds(t) {
+            const parts = t.split(':');
+            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        }
+        function calculate() {
+            const s1 = toSeconds(document.getElementById('t1').value);
+            const s2 = toSeconds(document.getElementById('t2').value);
+            const s3 = toSeconds(document.getElementById('t3').value);
+            const s4 = toSeconds(document.getElementById('t4').value);
+            const totalSec = s1 + s2 + s3 + s4;
+            const calls = parseInt(document.getElementById('calls').value);
+            const aht = totalSec / calls;
+            const target = 30;
+            
+            let html = `إجمالي الوقت: <b>${Math.floor(totalSec/3600)}h:${Math.floor((totalSec%3600)/60)}m:${totalSec%60}s</b><br>`;
+            html += `المتوسط الحالي: <span class="${aht <= target ? 'green' : 'red'}">${aht.toFixed(2)} ثانية</span><br>`;
+            
+            if (aht > target) {
+                const req = Math.ceil(totalSec / target) - calls;
+                html += `<hr>محتاج تعمل <b>${req}</b> مكالمة زيادة عشان توصل لـ 30 ثانية.`;
+            } else {
+                html += `<hr><span class="green">عاش يا بطل! أنت محقق التارجت.</span>`;
+            }
+            document.getElementById('result').innerHTML = html;
+            document.getElementById('result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

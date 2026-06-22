@@ -2,41 +2,92 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rashed ACW tool</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; width: 350px; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 15px; text-align: center; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: block; max-width: 350px; margin: 0 auto 20px auto; box-sizing: border-box; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        input:disabled { background: #e9ecef; color: #28a745; font-weight: bold; }
+        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
         #result { margin-top: 20px; text-align: right; background: #e9ecef; padding: 10px; border-radius: 5px; display: none; }
         .green { color: green; font-weight: bold; }
         .red { color: red; font-weight: bold; }
+        hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
+        h3 { margin-top: 0; color: #333; font-size: 20px; margin-bottom: 15px; }
+        label { display: block; text-align: right; font-size: 13px; color: #666; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="card">
         <h3>Rashed ACW tool</h3>
-        <input type="text" id="t1" placeholder="توقيت 1 (HH:MM:SS)" value="00:00:00">
-        <input type="text" id="t2" placeholder="توقيت 2 (HH:MM:SS)" value="00:00:00">
-        <input type="text" id="t3" placeholder="توقيت 3 (HH:MM:SS)" value="00:00:00">
-        <input type="text" id="t4" placeholder="توقيت 4 (HH:MM:SS)" value="00:00:00">
+        <input type="text" id="t1" placeholder="توقيت 1 (HHMMSS)" maxlength="8">
+        <input type="text" id="t2" placeholder="توقيت 2 (HHMMSS)" maxlength="8">
+        <input type="text" id="t3" placeholder="توقيت 3 (HHMMSS)" maxlength="8">
+        <input type="text" id="t4" placeholder="توقيت 4 (HHMMSS)" maxlength="8">
         <input type="number" id="calls" placeholder="عدد المكالمات">
         <button onclick="calculate()">احسب النتيجة</button>
         <div id="result"></div>
     </div>
 
+    <div class="card">
+        <h3>Versandkosten-Rechner</h3>
+        
+        <label for="vk_amount">Versandkosten (مصاريف الشحن الثابتة):</label>
+        <input type="number" id="vk_amount" step="0.01" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
+        
+        <label for="order_before">Warenwert / Bestellwert vor VK (ثمن الطلب):</label>
+        <input type="number" id="order_before" step="0.01" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
+        
+        <label for="order_total">Gesamtsumme inkl. VK (الإجمالي الكلي):</label>
+        <input type="text" id="order_total" placeholder="سيظهر الإجمالي تلقائياً" disabled>
+    </div>
+
     <script>
-        function toSeconds(t) {
-            const parts = t.split(':');
-            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        // 1. فورمات تلقائي للوقت وإضافة الـ (:) لوحدها بدون تداخُل مع الـ Backspace
+        function formatTime(e) {
+            if (e.inputType === 'deleteContentBackward') return; 
+            let value = e.target.value.replace(/\D/g, '');
+            let formatted = '';
+            if (value.length > 0) {
+                formatted += value.substring(0, 2);
+                if (value.length > 2) {
+                    formatted += ':' + value.substring(2, 4);
+                    if (value.length > 4) {
+                        formatted += ':' + value.substring(4, 6);
+                    }
+                }
+            }
+            e.target.value = formatted;
         }
+
+        // ربط خانات الوقت بالفورمات التلقائي
+        document.querySelectorAll('#t1, #t2, #t3, #t4').forEach(input => {
+            input.addEventListener('input', formatTime);
+        });
+
+        // تحويل الوقت لثواني
+        function toSeconds(t) {
+            if (!t || !t.includes(':')) return 0;
+            const parts = t.split(':');
+            return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+        }
+
+        // حسابات الأداة الأولى
         function calculate() {
             const s1 = toSeconds(document.getElementById('t1').value);
             const s2 = toSeconds(document.getElementById('t2').value);
             const s3 = toSeconds(document.getElementById('t3').value);
             const s4 = toSeconds(document.getElementById('t4').value);
             const totalSec = s1 + s2 + s3 + s4;
-            const calls = parseInt(document.getElementById('calls').value);
+            const calls = parseInt(document.getElementById('calls').value) || 0;
+            
+            if(calls === 0) {
+                alert("برجاء إدخال عدد المكالمات أولاً");
+                return;
+            }
+            
             const aht = totalSec / calls;
             const target = 30;
             
@@ -51,6 +102,34 @@
             }
             document.getElementById('result').innerHTML = html;
             document.getElementById('result').style.display = 'block';
+        }
+
+        // 2. حساب مصاريف الشحن اللحظي اللحظي
+        function calculateVK() {
+            const vk = parseFloat(document.getElementById('vk_amount').value) || 0;
+            const before = parseFloat(document.getElementById('order_before').value) || 0;
+            const total = vk + before;
+            
+            if (before > 0) {
+                document.getElementById('order_total').value = total.toFixed(2) + ' €';
+            } else {
+                document.getElementById('order_total').value = '';
+            }
+        }
+
+        // 3. حفظ مصاريف الشحن في ذاكرة المتصفح عشان تفضل ثابتة وماتتمسحش
+        function saveVK() {
+            const vk = document.getElementById('vk_amount').value;
+            localStorage.setItem('rashed_saved_vk', vk);
+        }
+
+        // استعادة قيمة الشحن المحفوظة أول ما الصفحة تفتح
+        window.onload = function() {
+            const savedVk = localStorage.getItem('rashed_saved_vk');
+            if (savedVk) {
+                document.getElementById('vk_amount').value = savedVk;
+                calculateVK();
+            }
         }
     </script>
 </body>

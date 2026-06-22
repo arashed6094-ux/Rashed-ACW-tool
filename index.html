@@ -35,10 +35,10 @@
         <h3>Versandkosten-Rechner</h3>
         
         <label for="vk_amount">Versandkosten (مصاريف الشحن الثابتة):</label>
-        <input type="number" id="vk_amount" step="0.01" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
+        <input type="text" inputmode="decimal" id="vk_amount" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
         
         <label for="order_before">Warenwert / Bestellwert vor VK (ثمن الطلب):</label>
-        <input type="number" id="order_before" step="0.01" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
+        <input type="text" inputmode="decimal" id="order_before" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
         
         <label for="order_total">Gesamtsumme inkl. VK (الإجمالي الكلي):</label>
         <input type="text" id="order_total" placeholder="سيظهر الإجمالي تلقائياً" disabled>
@@ -104,13 +104,18 @@
             document.getElementById('result').style.display = 'block';
         }
 
-        // 2. حساب مصاريف الشحن اللحظي اللحظي
+        // 2. حساب مصاريف الشحن اللحظي المعدل لمعالجة الكسور والفاصلة على الموبايل
         function calculateVK() {
-            const vk = parseFloat(document.getElementById('vk_amount').value) || 0;
-            const before = parseFloat(document.getElementById('order_before').value) || 0;
+            // تحويل أي فاصلة (,) لنقطة (.) لضمان الحساب الصحيح
+            let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
+            let beforeRaw = document.getElementById('order_before').value.replace(',', '.');
+            
+            const vk = parseFloat(vkRaw) || 0;
+            const before = parseFloat(beforeRaw) || 0;
             const total = vk + before;
             
-            if (before > 0) {
+            // يظهر الناتج مباشرة لو الخانة مش فاضية
+            if (document.getElementById('order_before').value.trim() !== "") {
                 document.getElementById('order_total').value = total.toFixed(2) + ' €';
             } else {
                 document.getElementById('order_total').value = '';

@@ -1,3 +1,657 @@
+cat > /mnt/user-data/outputs/rashed-acw-tool.html << 'ENDOFFILE'
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rashed ACW tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 15px; text-align: center; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: block; max-width: 350px; margin: 0 auto 20px auto; box-sizing: border-box; }
+        input[type=text], input[type=number] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        input:disabled { background: #e9ecef; color: #28a745; font-weight: bold; }
+        button.main-btn { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        #result { margin-top: 20px; text-align: right; background: #e9ecef; padding: 10px; border-radius: 5px; display: none; }
+        .green { color: green; font-weight: bold; }
+        .red { color: red; font-weight: bold; }
+        hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
+        h3 { margin-top: 0; color: #333; font-size: 20px; margin-bottom: 15px; }
+        label { display: block; text-align: right; font-size: 13px; color: #666; margin-top: 5px; font-weight: bold; }
+
+        /* ===== NAVIGATION PILLS ===== */
+        .nav-section { max-width: 350px; margin: 0 auto 20px auto; }
+        .pill-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+        .pill-row.hidden { display: none; }
+
+        .pill {
+            padding: 10px 22px; border-radius: 25px; border: 2px solid #28a745;
+            background: white; color: #28a745; font-size: 15px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .pill:hover { background: #28a745; color: white; }
+        .pill.active { background: #28a745; color: white; }
+
+        .pill.secondary { padding: 8px 18px; font-size: 14px; border-color: #1a7a32; color: #1a7a32; }
+        .pill.secondary:hover, .pill.secondary.active { background: #1a7a32; color: white; }
+
+        .pill.tertiary { padding: 7px 14px; font-size: 13px; border-color: #555; color: #555; border-radius: 20px; }
+        .pill.tertiary:hover, .pill.tertiary.active { background: #555; color: white; }
+
+        .pill.level4 { padding: 6px 12px; font-size: 12px; border-color: #888; color: #888; border-radius: 18px; }
+        .pill.level4:hover, .pill.level4.active { background: #888; color: white; }
+
+        .sub-level { display: none; margin-top: 8px; }
+        .sub-level.visible { display: block; }
+
+        /* ===== CONTENT CARD ===== */
+        .content-card {
+            background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 350px; margin: 10px auto 0 auto; padding: 16px;
+            text-align: right; box-sizing: border-box; display: none;
+        }
+        .content-card.visible { display: block; }
+
+        .content-card h4 {
+            margin: 0 0 10px 0; color: #1a7a32; font-size: 15px; border-bottom: 2px solid #e0f0e5; padding-bottom: 6px;
+        }
+        .info-box {
+            background: #f0f7f2; border-right: 3px solid #28a745; border-radius: 5px;
+            padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: #333; line-height: 1.6;
+        }
+        .info-box b { color: #1a7a32; }
+
+        .vorlage-label {
+            font-size: 12px; font-weight: bold; color: #888; margin-bottom: 5px; display: block;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .vorlage-box {
+            width: 100%; min-height: 90px; padding: 10px; border: 2px solid #28a745;
+            border-radius: 8px; font-size: 13px; line-height: 1.6; resize: vertical;
+            box-sizing: border-box; font-family: Arial, sans-serif; color: #222;
+            background: #f9fff9; direction: ltr; text-align: left;
+        }
+        .vorlage-box:focus { outline: none; border-color: #1a7a32; background: white; }
+
+        .copy-btn {
+            margin-top: 8px; padding: 7px 16px; background: #28a745; color: white;
+            border: none; border-radius: 20px; cursor: pointer; font-size: 13px;
+            font-weight: bold; float: left; transition: background 0.2s;
+        }
+        .copy-btn:hover { background: #1a7a32; }
+        .copy-btn.copied { background: #555; }
+        .clearfix { clear: both; }
+
+        .field-group { margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+
+    <!-- ===== CARD 1: ACW Tool ===== -->
+    <div class="card">
+        <h3>Rashed ACW tool</h3>
+        <input type="text" id="t1" placeholder="توقيت 1 (HHMMSS)" maxlength="8">
+        <input type="text" id="t2" placeholder="توقيت 2 (HHMMSS)" maxlength="8">
+        <input type="text" id="t3" placeholder="توقيت 3 (HHMMSS)" maxlength="8">
+        <input type="text" id="t4" placeholder="توقيت 4 (HHMMSS)" maxlength="8">
+        <input type="number" id="calls" placeholder="عدد المكالمات">
+        <button class="main-btn" onclick="calculate()">احسب النتيجة</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- ===== CARD 2: Versandkosten ===== -->
+    <div class="card">
+        <h3>Versandkosten-Rechner</h3>
+        <label for="vk_amount">Versandkosten (مصاريف الشحن الثابتة):</label>
+        <input type="text" inputmode="decimal" id="vk_amount" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
+        <label for="order_before">Warenwert / Bestellwert vor VK (ثمن الطلب):</label>
+        <input type="text" inputmode="decimal" id="order_before" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
+        <label for="order_total">Gesamtsumme inkl. VK (الإجمالي الكلي):</label>
+        <input type="text" id="order_total" placeholder="سيظهر الإجمالي تلقائياً" disabled>
+    </div>
+
+    <!-- ===== CARD 3: Navigation ===== -->
+    <div class="nav-section">
+        <div class="pill-row" id="row-main">
+            <div class="pill" id="pill-knowledge" onclick="toggleMain('knowledge')">Knowledge</div>
+            <div class="pill" id="pill-vorlagen" onclick="toggleMain('vorlagen')">Vorlagen</div>
+        </div>
+
+        <div class="sub-level" id="sub-knowledge">
+            <div class="card" style="margin:0; padding:15px;">
+                <p style="color:#888; margin:0; font-size:14px;">📚 Knowledge content coming soon...</p>
+            </div>
+        </div>
+
+        <div class="sub-level" id="sub-vorlagen">
+            <div class="pill-row" id="row-sub">
+                <div class="pill secondary" id="pill-popup" onclick="toggleSub('popup')">POPUP</div>
+                <div class="pill secondary" id="pill-wivo" onclick="toggleSub('wivo')">WIVO</div>
+            </div>
+
+            <!-- POPUP -->
+            <div class="sub-level" id="sub-popup">
+                <div class="pill-row">
+                    <div class="pill tertiary" onclick="showContent('popup-ala')">Bestellung an ALA</div>
+                    <div class="pill tertiary" onclick="showContent('popup-umtausch')">Umtausch- und Ersatz</div>
+                    <div class="pill tertiary" onclick="showContent('popup-liefertermin')">Liefertermin</div>
+                    <div class="pill tertiary" onclick="showContent('popup-verstorben')">Kunde verstorben</div>
+                </div>
+            </div>
+
+            <!-- WIVO -->
+            <div class="sub-level" id="sub-wivo">
+                <div class="pill-row" id="row-wivo-items">
+                    <div class="pill tertiary" id="pill-paket" onclick="selectWivoParent(this,'paket')">KD hat das Paket nicht erhalten</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-dublette')">Dublette</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-zahlschein')">Zahlschein</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-dubios')">Der Kunde ist Dubios</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-hinzufuegen')">Kunde möchte etwas hinzufügen</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-preisanpassung')">Preisanpassung</div>
+                    <div class="pill tertiary" id="pill-retoure" onclick="selectWivoParent(this,'retoure')">Retourenprobleme</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-rueckerstattung')">Rückerstattung</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-gutschein')">Gutscheincode ändern</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-fehlt')">Es fehlt ein Artikel</div>
+                    <div class="pill tertiary" id="pill-bezahlt" onclick="selectWivoParent(this,'bezahlt')">Schon bezahlt</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-passwort')">KD kann das Passwort nicht ändern</div>
+                </div>
+
+                <div class="sub-level" id="sub-paket">
+                    <div class="pill-row">
+                        <div class="pill level4" onclick="showContent('wivo-zugestellt')">zugestellt aber nicht erhalten</div>
+                        <div class="pill level4" onclick="showContent('wivo-paketstopp')">Paketstopp</div>
+                    </div>
+                </div>
+
+                <div class="sub-level" id="sub-retoure">
+                    <div class="pill-row">
+                        <div class="pill level4" onclick="showContent('wivo-ret-nv')">Retoure nicht verbucht</div>
+                        <div class="pill level4" onclick="showContent('wivo-ret-falsch')">Falsche Retoure eingegeben</div>
+                    </div>
+                </div>
+
+                <div class="sub-level" id="sub-bezahlt">
+                    <div class="pill-row">
+                        <div class="pill level4" onclick="showContent('wivo-bez-im')">Betrag ist im System</div>
+                        <div class="pill level4" onclick="showContent('wivo-bez-nicht')">Betrag ist nicht im System</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CONTENT CARDS ===== -->
+
+    <!-- WIVO: zugestellt aber nicht erhalten -->
+    <div class="content-card" id="content-wivo-zugestellt">
+        <h4>📦 KD hat das Paket nicht erhalten – zugestellt aber nicht erhalten</h4>
+        <div class="info-box">
+            Die Bestellung auf der DHL-Seite wurde zugestellt, der KD behauptet jedoch, dass er die Bestellung nicht erhalten hat und die Nachbarn gefragt hat, niemand hat das Paket.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Postnachforschung – Vorlage</span>
+            <textarea class="vorlage-box" id="v-zugestellt">Bitte zu Rechnungsnummer XXXXXX Postnachforschung einleiten. Die BE befindet sich nicht im Nachbarschaft, (KD wünscht keine Nachlieferung.)/(Nachlieferung bereits erfasst.)
+
+• Telefonnummer:
+• Emailadresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-zugestellt', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Paketstopp -->
+    <div class="content-card" id="content-wivo-paketstopp">
+        <h4>📦 KD hat das Paket nicht erhalten – Paketstopp</h4>
+        <div class="info-box">
+            Die Bestellung noch nicht zugestellt ist, aber seit 7 Tagen stehen geblieben ist – das Paket hängt.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-paketstopp">Zur Rechnungsnummer XXX mit der Sendungsnummer XXXX bitte einen Packetstopp einleiten! Kunde wünscht (erneute Zustellung) oder (keine neue Zustellung).</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-paketstopp', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Dublette -->
+    <div class="content-card" id="content-wivo-dublette">
+        <h4>👥 Dublette</h4>
+        <div class="info-box">
+            Sollte sich ein Kunde melden, dass er zwei Kataloge bekommt, oder beim Suchen auffällt, dass der Kunde schon ein KTO hat, oder beim Erfassen von Neukunden der Kunde bereits mehrere Konten hat.<br><br>
+            <b>Hinweis:</b> Kombinieren funktioniert nicht → wir deaktivieren eine Kundennummer. Bitte dem Kunden die aktive Kundennummer mitgeben! Falls Rückfragen: Kontaktdaten am KK hinterlegen.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Dublette – Vorlage</span>
+            <textarea class="vorlage-box" id="v-dublette">Der Kunde hat zwei Konten. Die andere Kundennummer: ----------
+Bitte kombinieren Sie die beiden Konten!
+
+• Telefonnummer:
+• Emailadresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-dublette', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Zahlschein -->
+    <div class="content-card" id="content-wivo-zahlschein">
+        <h4>🧾 Zahlschein</h4>
+        <div class="info-box">
+            Wenn der Zahlschein im Paket für den Versand gefehlt hat oder der Kunde den Zahlschein verloren hat und einen neuen verlangt.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Zahlschein – Vorlage</span>
+            <textarea class="vorlage-box" id="v-zahlschein">Zur REC ............, Der Kunde möchte einen Zahlschein per Mail/Per Post.
+
+• Telefonnummer:
+• Emailadresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-zahlschein', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Dubios -->
+    <div class="content-card" id="content-wivo-dubios">
+        <h4>⚠️ Der Kunde ist Dubios</h4>
+        <div class="info-box">
+            Der Kunde ist Dubios und möchte eine Bestellung aufgeben.<br><br>
+            <b>Achtung:</b> Dem Kunden <u>nicht</u> mitteilen, dass er dubios ist! Bitte dringend hier die Kontaktdaten aktualisieren.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
+            <textarea class="vorlage-box" id="v-dubios">Der Kunde ist Dubios und möchte eine BE aufgeben:
+Gutscheinscode:
+Artikelnummer: ........ GR.......
+
+• Telefonnummer:
+• Emailadresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-dubios', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Hinzufügen -->
+    <div class="content-card" id="content-wivo-hinzufuegen">
+        <h4>➕ Kunde möchte etwas hinzufügen</h4>
+        <div class="info-box">
+            Der Auftrag befindet sich in den offenen Vorgängen und der Kunde möchte etwas hinzufügen.<br><br>
+            <b>Achtung:</b> PayPal und Kreditkarten sind leider nicht möglich!
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
+            <textarea class="vorlage-box" id="v-hinzufuegen">KD möchte einen weiteren Artikel zu seiner aktuellen BE hinzufügen.
+Artikelnummer:
+Bitte fügen Sie den Artikel hinzu.
+
+Kontaktdaten:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-hinzufuegen', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Preisanpassung -->
+    <div class="content-card" id="content-wivo-preisanpassung">
+        <h4>💶 Preisanpassung</h4>
+        <div class="info-box">
+            KD meldet sich, da ein Artikel im Katalog weniger als auf der Rechnung kostet, bzw. der Preis im Katalog falsch ist.<br><br>
+            <b>Achtung:</b> PayPal und Kreditkarten sind leider nicht möglich!
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
+            <textarea class="vorlage-box" id="v-preisanpassung">Zur RE XXX meldet sich der KD: Art. XXXXX kostet im Katalog XX EUR, im System jedoch XX EUR.
+KD behält den Artikel \ nicht.
+
+KD wurde telefonisch über den zu zahlenden Betrag informiert.
+
+Bitte Preis anpassen.
+
+• Telefonnummer/Email:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-preisanpassung', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Retoure nicht verbucht -->
+    <div class="content-card" id="content-wivo-ret-nv">
+        <h4>📬 Retourenprobleme – Retoure nicht verbucht</h4>
+        <div class="info-box">
+            Der Kunde hat einen Artikel zurückgegeben, aber er ist nicht im System.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-ret-nv">Zur REC.................. behauptet der Kunde, dass er die folgenden Artikel zurückgegeben hat:
+Die Retourartikel: ....... in Gr .......
+
+Quittungsnummer: ..............
+
+Datum der Retoure: 00/00/0000
+
+• Telefonnummer:
+• Emailadresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-ret-nv', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Falsche Retoure -->
+    <div class="content-card" id="content-wivo-ret-falsch">
+        <h4>📬 Retourenprobleme – Falsche Retoure eingegeben</h4>
+        <div class="info-box">
+            Der Kunde hat den Artikel zurückgeschickt und ihn im System als einen anderen Artikel eingegeben.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-ret-falsch">Es wurde ein falscher Artikel XXXXX eingegeben, aber der Kunde hat tatsächlich Artikel XXXXXX zurückgegeben, bitte korrigieren Sie das.
+
+• Telefonnummer:
+• E-Mail Adresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-ret-falsch', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Rückerstattung -->
+    <div class="content-card" id="content-wivo-rueckerstattung">
+        <h4>💰 Rückerstattung</h4>
+        <div class="info-box">
+            Rückerstattung des Guthabens.<br><br>
+            <b>Achtung:</b> Ist die Retoure bereits gebucht oder nicht? Ist ein POP UP hinterlegt oder nicht? IBAN muss geprüft werden durch IBAN-Rechner.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-rueckerstattung">KD hat Waren zurückgeschickt und möchte eine Rückerstattung des Guthabens.
+
+• Rechnungsnummer:
+• Betrag der Gutschrift:
+• IBAN des Kunden:
+• Telefonnummer:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-rueckerstattung', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Gutscheincode -->
+    <div class="content-card" id="content-wivo-gutschein">
+        <h4>🎟️ Gutscheincode ändern</h4>
+        <div class="info-box">
+            Der Kunde möchte den Gutscheincode ändern. Paket ist schon beim Kunden zugestellt.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-gutschein">KD möchte den Gutscheincode ändern.
+Rechnungsnummer:
+
+- Neuer Mediencode + Prozent:
+- Einbehaltene Ware:
+- Stornobetrag:
+- E-Mail/Telefonnummer:
+
+Der KD wurde schon über den Stornobetrag informiert.</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-gutschein', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Fehlt ein Artikel -->
+    <div class="content-card" id="content-wivo-fehlt">
+        <h4>📭 Es fehlt ein Artikel</h4>
+        <div class="info-box">
+            Der Kunde hat das Paket erhalten, konnte aber einen Artikel nicht finden. Artikel steht auf der Rechnung.<br><br>
+            <b>Info:</b> Der Artikel wird nur als Retoure gebucht und der Kunde bekommt noch eine Retourenbestätigung.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-fehlt">Folgender Artikel auf der Rechnung XXXX fehlt im Paket, kostenloser Versand bereits erfolgt! Bitte buchen Sie den Betrag des Artikels aus der Originalrechnung aus.
+
+- Telefonnummer:
+- E-Mail Adresse:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-fehlt', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Schon bezahlt – im System -->
+    <div class="content-card" id="content-wivo-bez-im">
+        <h4>✅ Schon bezahlt – Betrag ist im System</h4>
+        <div class="info-box">
+            Wenn der Kunde bezahlt hat und wir den Betrag nicht im System finden können, aber der Betrag in der Liste steht.<br><br>
+            <b>Hinweis:</b> In der Liste steht noch eine 8-stellige Zahl – diese muss mit rauskopiert werden!
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-bez-im">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+
+- Der Betrag ..... ist in der unzuordenbaren Liste.
+- Mit Vorname Nachname ...............
+- Telefonnummer/Email:</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-bez-im', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Schon bezahlt – nicht im System -->
+    <div class="content-card" id="content-wivo-bez-nicht">
+        <h4>❌ Schon bezahlt – Betrag ist nicht im System</h4>
+        <div class="info-box">
+            Wenn der Kunde bezahlt hat und wir den Betrag nicht im System finden können, und der Betrag <u>nicht</u> in der Liste steht.<br><br>
+            <b>Hinweis:</b> Zahlungsbeleg wurde vom Kunden angefordert.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-bez-nicht">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+
+- Der Betrag ..... ist nicht in der unzuordenbaren Liste.
+- Mit Vorname Nachname ...............
+- IBAN-Nummer: (IBAN Rechner)</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-bez-nicht', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- WIVO: Passwort -->
+    <div class="content-card" id="content-wivo-passwort">
+        <h4>🔑 KD kann das Passwort nicht ändern</h4>
+        <div class="info-box">
+            Sollten alle Stricke reißen, kann man mittels WIVO das Passwort einmalig auf die PLZ setzen lassen!
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
+            <textarea class="vorlage-box" id="v-passwort">Kunde konnte sich trotz mehreren Versuchen das PW nicht neu setzen, Emailadresse ist korrekt, bitte auf die PLZ setzen! Vielen Dank!</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-passwort', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- POPUP: ALA -->
+    <div class="content-card" id="content-popup-ala">
+        <h4>🏠 Bestellung an alternative Lieferanschrift (ALA)</h4>
+        <div class="info-box">
+            Wenn der Kunde wünscht, dass die Bestellung an eine alternative Lieferanschrift geliefert wird.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
+            <textarea class="vorlage-box" id="v-ala">Kunde wünscht Lieferung an ALA.</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-ala', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- POPUP: Umtausch -->
+    <div class="content-card" id="content-popup-umtausch">
+        <h4>🔄 Umtausch- und Ersatzbestellungen</h4>
+        <div class="info-box">
+            Wenn ein Umtausch oder eine Ersatzbestellung bereits erfasst wurde.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
+            <textarea class="vorlage-box" id="v-umtausch">Umtausch / Ersatz zu RE XXXX bereits erfasst.</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-umtausch', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- POPUP: Liefertermin -->
+    <div class="content-card" id="content-popup-liefertermin">
+        <h4>📅 Liefertermin</h4>
+        <div class="info-box">
+            Wenn ein Liefertermin mit dem Kunden bestätigt wurde.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
+            <textarea class="vorlage-box" id="v-liefertermin">LT TT.MM.JJJJ ok.</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-liefertermin', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <!-- POPUP: Kunde verstorben -->
+    <div class="content-card" id="content-popup-verstorben">
+        <h4>🕊️ Kunde verstorben</h4>
+        <div class="info-box">
+            Wenn gemeldet wird, dass der Kunde verstorben ist, bitte zusätzlich ein POP-UP im System erfassen und dokumentieren, wer die Information gemeldet hat, sowie Kontaktdaten für eventuelle Rückfragen hinterlegen.
+        </div>
+        <div class="field-group">
+            <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
+            <textarea class="vorlage-box" id="v-verstorben">Die Ehefrau / Tochter / Sohn / Angehörige meldet sich und teilt mit, dass der Kunde verstorben ist.
+Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
+            <button class="copy-btn" onclick="copyVorlage('v-verstorben', this)">📋 Kopieren</button>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+
+    <script>
+        /* ===== ACW TOOL ===== */
+        function formatTime(e) {
+            if (e.inputType === 'deleteContentBackward') return;
+            let value = e.target.value.replace(/\D/g, '');
+            let formatted = '';
+            if (value.length > 0) {
+                formatted += value.substring(0, 2);
+                if (value.length > 2) {
+                    formatted += ':' + value.substring(2, 4);
+                    if (value.length > 4) formatted += ':' + value.substring(4, 6);
+                }
+            }
+            e.target.value = formatted;
+        }
+        document.querySelectorAll('#t1, #t2, #t3, #t4').forEach(input => {
+            input.addEventListener('input', formatTime);
+        });
+
+        function toSeconds(t) {
+            if (!t || !t.includes(':')) return 0;
+            const parts = t.split(':');
+            return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+        }
+
+        function calculate() {
+            const s1 = toSeconds(document.getElementById('t1').value);
+            const s2 = toSeconds(document.getElementById('t2').value);
+            const s3 = toSeconds(document.getElementById('t3').value);
+            const s4 = toSeconds(document.getElementById('t4').value);
+            const totalSec = s1 + s2 + s3 + s4;
+            const calls = parseInt(document.getElementById('calls').value) || 0;
+            if (calls === 0) { alert("برجاء إدخال عدد المكالمات أولاً"); return; }
+            const aht = totalSec / calls;
+            const target = 30;
+            let html = `إجمالي الوقت: <b>${Math.floor(totalSec/3600)}h:${Math.floor((totalSec%3600)/60)}m:${totalSec%60}s</b><br>`;
+            html += `المتوسط الحالي: <span class="${aht <= target ? 'green' : 'red'}">${aht.toFixed(2)} ثانية</span><br>`;
+            if (aht > target) {
+                const req = Math.ceil(totalSec / target) - calls;
+                html += `<hr>محتاج تعمل <b>${req}</b> مكالمة زيادة عشان توصل لـ 30 ثانية.`;
+            } else {
+                html += `<hr><span class="green">عاش يا بطل! أنت محقق التارجت.</span>`;
+            }
+            document.getElementById('result').innerHTML = html;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        /* ===== VERSANDKOSTEN ===== */
+        function calculateVK() {
+            let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
+            let beforeRaw = document.getElementById('order_before').value.replace(',', '.');
+            const vk = parseFloat(vkRaw) || 0;
+            const before = parseFloat(beforeRaw) || 0;
+            const total = vk + before;
+            if (document.getElementById('order_before').value.trim() !== "") {
+                document.getElementById('order_total').value = total.toFixed(2) + ' €';
+            } else {
+                document.getElementById('order_total').value = '';
+            }
+        }
+        function saveVK() {
+            localStorage.setItem('rashed_saved_vk', document.getElementById('vk_amount').value);
+        }
+        window.onload = function() {
+            const savedVk = localStorage.getItem('rashed_saved_vk');
+            if (savedVk) { document.getElementById('vk_amount').value = savedVk; calculateVK(); }
+        }
+
+        /* ===== NAVIGATION ===== */
+        function toggleMain(name) {
+            const el = document.getElementById('sub-' + name);
+            const pill = document.getElementById('pill-' + name);
+            const isOpen = el.classList.contains('visible');
+            ['knowledge','vorlagen'].forEach(n => {
+                document.getElementById('sub-' + n).classList.remove('visible');
+                document.getElementById('pill-' + n).classList.remove('active');
+            });
+            resetSubLevel();
+            hideAllContent();
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); }
+        }
+
+        function toggleSub(name) {
+            const el = document.getElementById('sub-' + name);
+            const pill = document.getElementById('pill-' + name);
+            const isOpen = el.classList.contains('visible');
+            ['wivo','popup'].forEach(n => {
+                document.getElementById('sub-' + n).classList.remove('visible');
+                document.getElementById('pill-' + n).classList.remove('active');
+            });
+            resetWivoLevel();
+            showWivoItems();
+            hideAllContent();
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); }
+        }
+
+        function selectWivoParent(pillEl, name) {
+            document.querySelectorAll('#row-wivo-items .pill').forEach(p => p.classList.remove('active'));
+            pillEl.classList.add('active');
+            document.getElementById('row-wivo-items').classList.add('hidden');
+            resetWivoLevel();
+            hideAllContent();
+            document.getElementById('sub-' + name).classList.add('visible');
+        }
+
+        function showContent(id) {
+            hideAllContent();
+            const card = document.getElementById('content-' + id);
+            if (card) card.classList.add('visible');
+            // highlight active pill
+            document.querySelectorAll('.pill.tertiary, .pill.level4').forEach(p => p.classList.remove('active'));
+            event.currentTarget && event.currentTarget.classList.add('active');
+        }
+
+        function hideAllContent() {
+            document.querySelectorAll('.content-card').forEach(c => c.classList.remove('visible'));
+        }
+
+        function resetWivoLevel() {
+            ['paket','retoure','bezahlt'].forEach(n => {
+                document.getElementById('sub-' + n).classList.remove('visible');
+                const p = document.getElementById('pill-' + n);
+                if (p) p.classList.remove('active');
+            });
+        }
+
+        function showWivoItems() {
+            document.getElementById('row-wivo-items').classList.remove('hidden');
+            document.querySelectorAll('#row-wivo-items .pill').forEach(p => p.classList.remove('active'));
+        }
+
+        function resetSubLevel() {
+            resetWivoLevel();
+            showWivoItems();
+            ['wivo','popup'].forEach(n => {
                 const el = document.getElementById('sub-' + n);
                 const pill = document.getElementById('pill-' + n);
                 if (el) el.classList.remove('visible');

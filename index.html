@@ -83,12 +83,10 @@
         .vorlage-box:focus { outline: none; border-color: #c0272d; background: white; }
 
         .copy-btn { margin-top: 8px; padding: 7px 16px; background: #c0272d; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; float: left; transition: background 0.2s; }
-            margin-top: 8px; padding: 7px 16px; background: #1e3a7b; color: white;
-            border: none; border-radius: 20px; cursor: pointer; font-size: 13px;
-            font-weight: bold; float: left; transition: background 0.2s;
-        }
         .copy-btn:hover { background: #a01f24; }
         .copy-btn.copied { background: #555; }
+        .reset-btn { margin-top: 8px; margin-left: 8px; padding: 7px 13px; background: white; color: #888; border: 2px solid #ccc; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; float: left; transition: all 0.2s; }
+        .reset-btn:hover { background: #f5f5f5; border-color: #999; color: #444; }
         .clearfix { clear: both; }
 
         .field-group { margin-bottom: 14px; }
@@ -199,12 +197,15 @@
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Postnachforschung – Vorlage</span>
-            <textarea class="vorlage-box" id="v-zugestellt">Bitte zu Rechnungsnummer XXXXXX Postnachforschung einleiten. Die BE befindet sich nicht im Nachbarschaft, (KD wünscht keine Nachlieferung.)/(Nachlieferung bereits erfasst.)
+            <textarea class="vorlage-box" id="v-zugestellt" data-original="Bitte zu Rechnungsnummer XXXXXX Postnachforschung einleiten. Die BE befindet sich nicht im Nachbarschaft, (KD wünscht keine Nachlieferung.)/(Nachlieferung bereits erfasst.)
+
+• Telefonnummer:
+• Emailadresse:">Bitte zu Rechnungsnummer XXXXXX Postnachforschung einleiten. Die BE befindet sich nicht im Nachbarschaft, (KD wünscht keine Nachlieferung.)/(Nachlieferung bereits erfasst.)
 
 • Telefonnummer:
 • Emailadresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-zugestellt', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -216,9 +217,9 @@
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-paketstopp">Zur Rechnungsnummer XXX mit der Sendungsnummer XXXX bitte einen Packetstopp einleiten! Kunde wünscht (erneute Zustellung) oder (keine neue Zustellung).</textarea>
+            <textarea class="vorlage-box" id="v-paketstopp" data-original="Zur Rechnungsnummer XXX mit der Sendungsnummer XXXX bitte einen Packetstopp einleiten! Kunde wünscht (erneute Zustellung) oder (keine neue Zustellung).">Zur Rechnungsnummer XXX mit der Sendungsnummer XXXX bitte einen Packetstopp einleiten! Kunde wünscht (erneute Zustellung) oder (keine neue Zustellung).</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-paketstopp', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -231,13 +232,17 @@
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Dublette – Vorlage</span>
-            <textarea class="vorlage-box" id="v-dublette">Der Kunde hat zwei Konten. Die andere Kundennummer: ----------
+            <textarea class="vorlage-box" id="v-dublette" data-original="Der Kunde hat zwei Konten. Die andere Kundennummer: ----------
+Bitte kombinieren Sie die beiden Konten!
+
+• Telefonnummer:
+• Emailadresse:">Der Kunde hat zwei Konten. Die andere Kundennummer: ----------
 Bitte kombinieren Sie die beiden Konten!
 
 • Telefonnummer:
 • Emailadresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-dublette', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -249,12 +254,15 @@ Bitte kombinieren Sie die beiden Konten!
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Zahlschein – Vorlage</span>
-            <textarea class="vorlage-box" id="v-zahlschein">Zur REC ............, Der Kunde möchte einen Zahlschein per Mail/Per Post.
+            <textarea class="vorlage-box" id="v-zahlschein" data-original="Zur REC ............, Der Kunde möchte einen Zahlschein per Mail/Per Post.
+
+• Telefonnummer:
+• Emailadresse:">Zur REC ............, Der Kunde möchte einen Zahlschein per Mail/Per Post.
 
 • Telefonnummer:
 • Emailadresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-zahlschein', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -267,14 +275,19 @@ Bitte kombinieren Sie die beiden Konten!
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
-            <textarea class="vorlage-box" id="v-dubios">Der Kunde ist Dubios und möchte eine BE aufgeben:
+            <textarea class="vorlage-box" id="v-dubios" data-original="Der Kunde ist Dubios und möchte eine BE aufgeben:
+Gutscheinscode:
+Artikelnummer: ........ GR.......
+
+• Telefonnummer:
+• Emailadresse:">Der Kunde ist Dubios und möchte eine BE aufgeben:
 Gutscheinscode:
 Artikelnummer: ........ GR.......
 
 • Telefonnummer:
 • Emailadresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-dubios', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -287,13 +300,17 @@ Artikelnummer: ........ GR.......
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
-            <textarea class="vorlage-box" id="v-hinzufuegen">KD möchte einen weiteren Artikel zu seiner aktuellen BE hinzufügen.
+            <textarea class="vorlage-box" id="v-hinzufuegen" data-original="KD möchte einen weiteren Artikel zu seiner aktuellen BE hinzufügen.
+Artikelnummer:
+Bitte fügen Sie den Artikel hinzu.
+
+Kontaktdaten:">KD möchte einen weiteren Artikel zu seiner aktuellen BE hinzufügen.
 Artikelnummer:
 Bitte fügen Sie den Artikel hinzu.
 
 Kontaktdaten:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-hinzufuegen', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -306,7 +323,14 @@ Kontaktdaten:</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Zusatz zur Bestellung – Vorlage</span>
-            <textarea class="vorlage-box" id="v-preisanpassung">Zur RE XXX meldet sich der KD: Art. XXXXX kostet im Katalog XX EUR, im System jedoch XX EUR.
+            <textarea class="vorlage-box" id="v-preisanpassung" data-original="Zur RE XXX meldet sich der KD: Art. XXXXX kostet im Katalog XX EUR, im System jedoch XX EUR.
+KD behält den Artikel \ nicht.
+
+KD wurde telefonisch über den zu zahlenden Betrag informiert.
+
+Bitte Preis anpassen.
+
+• Telefonnummer/Email:">Zur RE XXX meldet sich der KD: Art. XXXXX kostet im Katalog XX EUR, im System jedoch XX EUR.
 KD behält den Artikel \ nicht.
 
 KD wurde telefonisch über den zu zahlenden Betrag informiert.
@@ -315,7 +339,7 @@ Bitte Preis anpassen.
 
 • Telefonnummer/Email:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-preisanpassung', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -327,7 +351,15 @@ Bitte Preis anpassen.
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-ret-nv">Zur REC.................. behauptet der Kunde, dass er die folgenden Artikel zurückgegeben hat:
+            <textarea class="vorlage-box" id="v-ret-nv" data-original="Zur REC.................. behauptet der Kunde, dass er die folgenden Artikel zurückgegeben hat:
+Die Retourartikel: ....... in Gr .......
+
+Quittungsnummer: ..............
+
+Datum der Retoure: 00/00/0000
+
+• Telefonnummer:
+• Emailadresse:">Zur REC.................. behauptet der Kunde, dass er die folgenden Artikel zurückgegeben hat:
 Die Retourartikel: ....... in Gr .......
 
 Quittungsnummer: ..............
@@ -337,7 +369,7 @@ Datum der Retoure: 00/00/0000
 • Telefonnummer:
 • Emailadresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-ret-nv', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -349,12 +381,15 @@ Datum der Retoure: 00/00/0000
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-ret-falsch">Es wurde ein falscher Artikel XXXXX eingegeben, aber der Kunde hat tatsächlich Artikel XXXXXX zurückgegeben, bitte korrigieren Sie das.
+            <textarea class="vorlage-box" id="v-ret-falsch" data-original="Es wurde ein falscher Artikel XXXXX eingegeben, aber der Kunde hat tatsächlich Artikel XXXXXX zurückgegeben, bitte korrigieren Sie das.
+
+• Telefonnummer:
+• E-Mail Adresse:">Es wurde ein falscher Artikel XXXXX eingegeben, aber der Kunde hat tatsächlich Artikel XXXXXX zurückgegeben, bitte korrigieren Sie das.
 
 • Telefonnummer:
 • E-Mail Adresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-ret-falsch', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -367,14 +402,19 @@ Datum der Retoure: 00/00/0000
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-rueckerstattung">KD hat Waren zurückgeschickt und möchte eine Rückerstattung des Guthabens.
+            <textarea class="vorlage-box" id="v-rueckerstattung" data-original="KD hat Waren zurückgeschickt und möchte eine Rückerstattung des Guthabens.
+
+• Rechnungsnummer:
+• Betrag der Gutschrift:
+• IBAN des Kunden:
+• Telefonnummer:">KD hat Waren zurückgeschickt und möchte eine Rückerstattung des Guthabens.
 
 • Rechnungsnummer:
 • Betrag der Gutschrift:
 • IBAN des Kunden:
 • Telefonnummer:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-rueckerstattung', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -386,7 +426,15 @@ Datum der Retoure: 00/00/0000
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-gutschein">KD möchte den Gutscheincode ändern.
+            <textarea class="vorlage-box" id="v-gutschein" data-original="KD möchte den Gutscheincode ändern.
+Rechnungsnummer:
+
+- Neuer Mediencode + Prozent:
+- Einbehaltene Ware:
+- Stornobetrag:
+- E-Mail/Telefonnummer:
+
+Der KD wurde schon über den Stornobetrag informiert.">KD möchte den Gutscheincode ändern.
 Rechnungsnummer:
 
 - Neuer Mediencode + Prozent:
@@ -396,7 +444,7 @@ Rechnungsnummer:
 
 Der KD wurde schon über den Stornobetrag informiert.</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-gutschein', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -409,12 +457,15 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-fehlt">Folgender Artikel auf der Rechnung XXXX fehlt im Paket, kostenloser Versand bereits erfolgt! Bitte buchen Sie den Betrag des Artikels aus der Originalrechnung aus.
+            <textarea class="vorlage-box" id="v-fehlt" data-original="Folgender Artikel auf der Rechnung XXXX fehlt im Paket, kostenloser Versand bereits erfolgt! Bitte buchen Sie den Betrag des Artikels aus der Originalrechnung aus.
+
+- Telefonnummer:
+- E-Mail Adresse:">Folgender Artikel auf der Rechnung XXXX fehlt im Paket, kostenloser Versand bereits erfolgt! Bitte buchen Sie den Betrag des Artikels aus der Originalrechnung aus.
 
 - Telefonnummer:
 - E-Mail Adresse:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-fehlt', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -427,13 +478,17 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-bez-im">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+            <textarea class="vorlage-box" id="v-bez-im" data-original="An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+
+- Der Betrag ..... ist in der unzuordenbaren Liste.
+- Mit Vorname Nachname ...............
+- Telefonnummer/Email:">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
 
 - Der Betrag ..... ist in der unzuordenbaren Liste.
 - Mit Vorname Nachname ...............
 - Telefonnummer/Email:</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-bez-im', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -446,13 +501,17 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-bez-nicht">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+            <textarea class="vorlage-box" id="v-bez-nicht" data-original="An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
+
+- Der Betrag ..... ist nicht in der unzuordenbaren Liste.
+- Mit Vorname Nachname ...............
+- IBAN-Nummer: (IBAN Rechner)">An REC ......., KD behauptet, dass er am .../.../...... bereits bezahlt hat.
 
 - Der Betrag ..... ist nicht in der unzuordenbaren Liste.
 - Mit Vorname Nachname ...............
 - IBAN-Nummer: (IBAN Rechner)</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-bez-nicht', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -464,9 +523,9 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Status: Telefonkontakt – Vorlage</span>
-            <textarea class="vorlage-box" id="v-passwort">Kunde konnte sich trotz mehreren Versuchen das PW nicht neu setzen, Emailadresse ist korrekt, bitte auf die PLZ setzen! Vielen Dank!</textarea>
+            <textarea class="vorlage-box" id="v-passwort" data-original="Kunde konnte sich trotz mehreren Versuchen das PW nicht neu setzen, Emailadresse ist korrekt, bitte auf die PLZ setzen! Vielen Dank!">Kunde konnte sich trotz mehreren Versuchen das PW nicht neu setzen, Emailadresse ist korrekt, bitte auf die PLZ setzen! Vielen Dank!</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-passwort', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -478,9 +537,9 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
-            <textarea class="vorlage-box" id="v-ala">Kunde wünscht Lieferung an ALA.</textarea>
+            <textarea class="vorlage-box" id="v-ala" data-original="Kunde wünscht Lieferung an ALA.">Kunde wünscht Lieferung an ALA.</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-ala', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -492,9 +551,9 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
-            <textarea class="vorlage-box" id="v-umtausch">Umtausch / Ersatz zu RE XXXX bereits erfasst.</textarea>
+            <textarea class="vorlage-box" id="v-umtausch" data-original="Umtausch / Ersatz zu RE XXXX bereits erfasst.">Umtausch / Ersatz zu RE XXXX bereits erfasst.</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-umtausch', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -506,9 +565,9 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
-            <textarea class="vorlage-box" id="v-liefertermin">LT TT.MM.JJJJ ok.</textarea>
+            <textarea class="vorlage-box" id="v-liefertermin" data-original="LT TT.MM.JJJJ ok.">LT TT.MM.JJJJ ok.</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-liefertermin', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -520,10 +579,11 @@ Der KD wurde schon über den Stornobetrag informiert.</textarea>
         </div>
         <div class="field-group">
             <span class="vorlage-label">✏️ Standardtext – Vorlage</span>
-            <textarea class="vorlage-box" id="v-verstorben">Die Ehefrau / Tochter / Sohn / Angehörige meldet sich und teilt mit, dass der Kunde verstorben ist.
+            <textarea class="vorlage-box" id="v-verstorben" data-original="Die Ehefrau / Tochter / Sohn / Angehörige meldet sich und teilt mit, dass der Kunde verstorben ist.
+Kontakt für Rückfragen: Tel. / E-Mail XXXXX.">Die Ehefrau / Tochter / Sohn / Angehörige meldet sich und teilt mit, dass der Kunde verstorben ist.
 Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             <button class="copy-btn" onclick="copyVorlage('v-verstorben', this)">📋 Kopieren</button>
-            <div class="clearfix"></div>
+            <button class="reset-btn" onclick="resetVorlage(this)">↺ Reset</button><div class="clearfix"></div>
         </div>
     </div>
 
@@ -671,24 +731,33 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             });
         }
 
-        /* ===== COPY ===== */
+        /* ===== AUTO RESIZE ===== */
         function autoResize(ta) {
             ta.style.height = 'auto';
             ta.style.height = ta.scrollHeight + 'px';
         }
 
-        // Auto-resize all vorlage textareas on load and on input
         document.querySelectorAll('.vorlage-box').forEach(ta => {
             autoResize(ta);
             ta.addEventListener('input', () => autoResize(ta));
         });
+
+        /* ===== COPY ===== */
         function copyVorlage(id, btn) {
             const ta = document.getElementById(id);
             navigator.clipboard.writeText(ta.value).then(() => {
-                btn.textContent = '✅ Kopiert!';
+                btn.textContent = '\u2705 Kopiert!';
                 btn.classList.add('copied');
-                setTimeout(() => { btn.textContent = '📋 Kopieren'; btn.classList.remove('copied'); }, 2000);
+                setTimeout(() => { btn.textContent = '\ud83d\udccb Kopieren'; btn.classList.remove('copied'); }, 2000);
             });
+        }
+
+        /* ===== RESET ===== */
+        function resetVorlage(btn) {
+            const fieldGroup = btn.closest('.field-group');
+            const ta = fieldGroup.querySelector('.vorlage-box');
+            ta.value = ta.getAttribute('data-original');
+            autoResize(ta);
         }
     </script>
 </body>

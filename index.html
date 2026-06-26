@@ -22,7 +22,6 @@
 
         /* PC wider layout */
         @media (min-width: 600px) {
-            .card { max-width: 700px; }
             .nav-section { max-width: 700px; }
             .content-card { max-width: 700px; }
             .vorlage-box { min-height: 120px; font-size: 14px; }
@@ -66,7 +65,7 @@
             margin: 0 0 10px 0; color: #c0272d; font-size: 15px; border-bottom: 2px solid #e0e6f5; padding-bottom: 6px;
         }
         .info-box { direction: ltr; text-align: left;
-            background: #f0f2f9; border-right: 3px solid #1e3a7b; border-radius: 5px;
+            background: #f0f2f9; border-left: 3px solid #1e3a7b; border-radius: 5px;
             padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: #333; line-height: 1.6;
         }
         .info-box b { color: #c0272d; }
@@ -142,10 +141,10 @@
             <!-- POPUP -->
             <div class="sub-level" id="sub-popup">
                 <div class="pill-row">
-                    <div class="pill tertiary" onclick="showContent('popup-ala')">Bestellung an ALA</div>
-                    <div class="pill tertiary" onclick="showContent('popup-umtausch')">Umtausch- und Ersatz</div>
-                    <div class="pill tertiary" onclick="showContent('popup-liefertermin')">Liefertermin</div>
-                    <div class="pill tertiary" onclick="showContent('popup-verstorben')">Kunde verstorben</div>
+                    <div class="pill tertiary" onclick="showContent('popup-ala', this)">Bestellung an ALA</div>
+                    <div class="pill tertiary" onclick="showContent('popup-umtausch', this)">Umtausch- und Ersatz</div>
+                    <div class="pill tertiary" onclick="showContent('popup-liefertermin', this)">Liefertermin</div>
+                    <div class="pill tertiary" onclick="showContent('popup-verstorben', this)">Kunde verstorben</div>
                 </div>
             </div>
 
@@ -153,37 +152,37 @@
             <div class="sub-level" id="sub-wivo">
                 <div class="pill-row" id="row-wivo-items">
                     <div class="pill tertiary" id="pill-paket" onclick="selectWivoParent(this,'paket')">KD hat das Paket nicht erhalten</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-dublette')">Dublette</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-zahlschein')">Zahlschein</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-dubios')">Der Kunde ist Dubios</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-hinzufuegen')">Kunde möchte etwas hinzufügen</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-preisanpassung')">Preisanpassung</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-dublette', this)">Dublette</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-zahlschein', this)">Zahlschein</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-dubios', this)">Der Kunde ist Dubios</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-hinzufuegen', this)">Kunde möchte etwas hinzufügen</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-preisanpassung', this)">Preisanpassung</div>
                     <div class="pill tertiary" id="pill-retoure" onclick="selectWivoParent(this,'retoure')">Retourenprobleme</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-rueckerstattung')">Rückerstattung</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-gutschein')">Gutscheincode ändern</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-fehlt')">Es fehlt ein Artikel</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-rueckerstattung', this)">Rückerstattung</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-gutschein', this)">Gutscheincode ändern</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-fehlt', this)">Es fehlt ein Artikel</div>
                     <div class="pill tertiary" id="pill-bezahlt" onclick="selectWivoParent(this,'bezahlt')">Schon bezahlt</div>
-                    <div class="pill tertiary" onclick="showContent('wivo-passwort')">KD kann das Passwort nicht ändern</div>
+                    <div class="pill tertiary" onclick="showContent('wivo-passwort', this)">KD kann das Passwort nicht ändern</div>
                 </div>
 
                 <div class="sub-level" id="sub-paket">
                     <div class="pill-row">
-                        <div class="pill level4" onclick="showContent('wivo-zugestellt')">zugestellt aber nicht erhalten</div>
-                        <div class="pill level4" onclick="showContent('wivo-paketstopp')">Paketstopp</div>
+                        <div class="pill level4" onclick="showContent('wivo-zugestellt', this)">zugestellt aber nicht erhalten</div>
+                        <div class="pill level4" onclick="showContent('wivo-paketstopp', this)">Paketstopp</div>
                     </div>
                 </div>
 
                 <div class="sub-level" id="sub-retoure">
                     <div class="pill-row">
-                        <div class="pill level4" onclick="showContent('wivo-ret-nv')">Retoure nicht verbucht</div>
-                        <div class="pill level4" onclick="showContent('wivo-ret-falsch')">Falsche Retoure eingegeben</div>
+                        <div class="pill level4" onclick="showContent('wivo-ret-nv', this)">Retoure nicht verbucht</div>
+                        <div class="pill level4" onclick="showContent('wivo-ret-falsch', this)">Falsche Retoure eingegeben</div>
                     </div>
                 </div>
 
                 <div class="sub-level" id="sub-bezahlt">
                     <div class="pill-row">
-                        <div class="pill level4" onclick="showContent('wivo-bez-im')">Betrag ist im System</div>
-                        <div class="pill level4" onclick="showContent('wivo-bez-nicht')">Betrag ist nicht im System</div>
+                        <div class="pill level4" onclick="showContent('wivo-bez-im', this)">Betrag ist im System</div>
+                        <div class="pill level4" onclick="showContent('wivo-bez-nicht', this)">Betrag ist nicht im System</div>
                     </div>
                 </div>
             </div>
@@ -633,13 +632,12 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             document.getElementById('sub-' + name).classList.add('visible');
         }
 
-        function showContent(id) {
+        function showContent(id, pillEl) {
             hideAllContent();
             const card = document.getElementById('content-' + id);
             if (card) card.classList.add('visible');
-            // highlight active pill
             document.querySelectorAll('.pill.tertiary, .pill.level4').forEach(p => p.classList.remove('active'));
-            event.currentTarget && event.currentTarget.classList.add('active');
+            if (pillEl) pillEl.classList.add('active');
         }
 
         function hideAllContent() {

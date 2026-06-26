@@ -75,8 +75,8 @@
             text-transform: uppercase; letter-spacing: 0.5px;
         }
         .vorlage-box {
-            width: 100%; min-height: 90px; padding: 10px; border: 2px solid #1e3a7b;
-            border-radius: 8px; font-size: 13px; line-height: 1.6; resize: vertical;
+            width: 100%; padding: 10px; border: 2px solid #1e3a7b;
+            border-radius: 8px; font-size: 13px; line-height: 1.6; resize: none; overflow: hidden;
             box-sizing: border-box; font-family: Arial, sans-serif; color: #222;
             background: #f5f6fb; direction: ltr; text-align: left;
         }
@@ -635,7 +635,10 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         function showContent(id, pillEl) {
             hideAllContent();
             const card = document.getElementById('content-' + id);
-            if (card) card.classList.add('visible');
+            if (card) {
+                card.classList.add('visible');
+                card.querySelectorAll('.vorlage-box').forEach(ta => autoResize(ta));
+            }
             document.querySelectorAll('.pill.tertiary, .pill.level4').forEach(p => p.classList.remove('active'));
             if (pillEl) pillEl.classList.add('active');
         }
@@ -669,6 +672,16 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         }
 
         /* ===== COPY ===== */
+        function autoResize(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+
+        // Auto-resize all vorlage textareas on load and on input
+        document.querySelectorAll('.vorlage-box').forEach(ta => {
+            autoResize(ta);
+            ta.addEventListener('input', () => autoResize(ta));
+        });
         function copyVorlage(id, btn) {
             const ta = document.getElementById(id);
             navigator.clipboard.writeText(ta.value).then(() => {

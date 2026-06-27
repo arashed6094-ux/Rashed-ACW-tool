@@ -106,6 +106,18 @@
         <div id="result"></div>
     </div>
 
+
+    <!-- ===== CARD 2: Erreichbarkeit ===== -->
+    <div class="card">
+        <h3>Erreichbarkeit-Rechner</h3>
+        <label for="total-calls">Gesamtanzahl der Anrufe (إجمالي المكالمات):</label>
+        <input type="number" id="total-calls" placeholder="z.B. 120" min="0">
+        <label for="dropped-calls">Verlorene Anrufe / Dropped Calls:</label>
+        <input type="number" id="dropped-calls" placeholder="z.B. 8" min="0">
+        <button class="main-btn" onclick="calculateErreich()">Erreichbarkeit berechnen</button>
+        <div id="erreich-result"></div>
+    </div>
+
     <!-- ===== CARD 2: Versandkosten ===== -->
     <div class="card">
         <h3>Versandkosten-Rechner</h3>
@@ -122,11 +134,62 @@
         <div class="pill-row" id="row-main">
             <div class="pill" id="pill-knowledge" onclick="toggleMain('knowledge')">Knowledge</div>
             <div class="pill" id="pill-vorlagen" onclick="toggleMain('vorlagen')">Vorlagen</div>
+            <div class="pill" id="pill-mailhelper" onclick="toggleMain('mailhelper')">✉️ Mail Helper</div>
         </div>
 
         <div class="sub-level" id="sub-knowledge">
             <div class="card" style="margin:0; padding:15px;">
                 <p style="color:#888; margin:0; font-size:14px;">📚 Knowledge content coming soon...</p>
+            </div>
+        </div>
+
+
+        <div class="sub-level" id="sub-mailhelper">
+            <div class="pill-row">
+                <div class="pill secondary" id="pill-callval" onclick="toggleMailSub('callval')">📞 Call Validation</div>
+            </div>
+            <div class="sub-level" id="sub-callval">
+                <div class="content-card visible" id="mail-callval-form" style="display:block; max-width:700px;">
+                    <h4>📞 Call Validation – بيانات المكالمة</h4>
+                    <div class="field-group" style="direction:rtl; text-align:right;">
+
+                        <label style="font-size:13px; font-weight:bold; color:#1e3a7b; display:block; margin-bottom:4px;">📱 رقم الهاتف:</label>
+                        <input type="text" id="cv-phone" placeholder="رقم الهاتف" style="width:100%; padding:9px; border:2px solid #ccc; border-radius:8px; font-size:14px; box-sizing:border-box; margin-bottom:12px; text-align:left; direction:ltr;">
+
+                        <label style="font-size:13px; font-weight:bold; color:#1e3a7b; display:block; margin-bottom:4px;">📅 التاريخ:</label>
+                        <input type="text" id="cv-date" style="width:100%; padding:9px; border:2px solid #ccc; border-radius:8px; font-size:14px; box-sizing:border-box; margin-bottom:12px; background:#f0f2f9; text-align:left; direction:ltr;" readonly>
+
+                        <label style="font-size:13px; font-weight:bold; color:#1e3a7b; display:block; margin-bottom:4px;">🕐 موعد المكالمة:</label>
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <select id="cv-hour" style="flex:1; padding:9px; border:2px solid #ccc; border-radius:8px; font-size:14px; box-sizing:border-box;"></select>
+                            <select id="cv-minute" style="flex:1; padding:9px; border:2px solid #ccc; border-radius:8px; font-size:14px; box-sizing:border-box;"></select>
+                        </div>
+
+                        <label style="font-size:13px; font-weight:bold; color:#1e3a7b; display:block; margin-bottom:8px;">📋 نوع المكالمة:</label>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;" id="cv-calltype-group">
+                            <div class="pill tertiary" onclick="selectCallType(this, 'Dropped call')" style="font-size:12px; padding:6px 12px;">Dropped call</div>
+                            <div class="pill tertiary" onclick="selectCallType(this, 'Call under 1 minute')" style="font-size:12px; padding:6px 12px;">Call under 1 minute</div>
+                            <div class="pill tertiary" onclick="selectCallType(this, 'Call over 10 minutes')" style="font-size:12px; padding:6px 12px;">Call over 10 minutes</div>
+                        </div>
+
+                        <label style="font-size:13px; font-weight:bold; color:#1e3a7b; display:block; margin-bottom:4px;">✏️ وصف المشكلة (بالعربي):</label>
+                        <textarea id="cv-desc" placeholder="اكتب وصف المشكلة بالعربي هنا..." style="width:100%; padding:9px; border:2px solid #ccc; border-radius:8px; font-size:14px; min-height:80px; box-sizing:border-box; resize:vertical; direction:rtl; text-align:right; margin-bottom:12px;"></textarea>
+
+                        <div id="cv-error" style="color:#c0272d; font-size:13px; margin-bottom:8px; display:none;">⚠️ برجاء ملء جميع الحقول واختيار نوع المكالمة.</div>
+
+                        <button onclick="generateCallValidation()" style="width:100%; padding:11px; background:#1e3a7b; color:white; border:none; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer;">🚀 توليد الـ Prompt</button>
+                    </div>
+
+                    <div id="cv-result" style="display:none; margin-top:16px; direction:ltr; text-align:left;">
+                        <div style="font-size:12px; font-weight:bold; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">✏️ Prompt جاهز – انسخه والصقه في ChatGPT</div>
+                        <textarea id="cv-prompt-output" style="width:100%; padding:10px; border:2px solid #1e3a7b; border-radius:8px; font-size:13px; line-height:1.6; background:#f5f6fb; box-sizing:border-box; resize:none; overflow:hidden; direction:ltr; text-align:left; font-family:Arial,sans-serif;"></textarea>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button onclick="copyPrompt(this)" style="padding:8px 18px; background:#c0272d; color:white; border:none; border-radius:20px; cursor:pointer; font-size:13px; font-weight:bold;">📋 Copy Prompt</button>
+                            <button onclick="openChatGPT()" style="padding:8px 18px; background:#1e3a7b; color:white; border:none; border-radius:20px; cursor:pointer; font-size:13px; font-weight:bold;">🔗 فتح ChatGPT</button>
+                            <button onclick="resetCallValidation()" style="padding:8px 14px; background:white; color:#888; border:2px solid #ccc; border-radius:20px; cursor:pointer; font-size:13px; font-weight:bold;">↺ Reset</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -634,6 +697,47 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             document.getElementById('result').style.display = 'block';
         }
 
+
+        /* ===== ERREICHBARKEIT ===== */
+        function calculateErreich() {
+            const total   = parseInt(document.getElementById('total-calls').value) || 0;
+            const dropped = parseInt(document.getElementById('dropped-calls').value) || 0;
+            const resEl   = document.getElementById('erreich-result');
+
+            if (total === 0) {
+                resEl.innerHTML = '<span class="red">Bitte Gesamtanzahl der Anrufe eingeben.</span>';
+                resEl.style.display = 'block';
+                return;
+            }
+            if (dropped > total) {
+                resEl.innerHTML = '<span class="red">Verlorene Anrufe können nicht größer als Gesamtanrufe sein.</span>';
+                resEl.style.display = 'block';
+                return;
+            }
+
+            const completed = total - dropped;
+            const rate = (completed / total) * 100;
+            const color = rate >= 90 ? 'green' : 'red';
+
+            let msg = '';
+            if (rate === 100) {
+                msg = '😂 يعني انت عايز تفهمني ان يوتيل شهر كامل ماوقعش ولا كول ؟ 🤔 شكلك خدت الانوال كله الشهر دا';
+            } else if (rate >= 95) {
+                msg = '🙏 انت في السليم ماتنساش بس تبعت ميل الـ Call Validation أول بأول';
+            } else if (rate >= 90) {
+                msg = '😰 استر يارب اتمنى تكون مشكلة عامة';
+            } else {
+                msg = '🤦‍♂️ انت كدا جاي تهزر وهتنزلنا كلنا السايت والله';
+            }
+
+            resEl.innerHTML = `
+                Abgeschlossene Anrufe: <b>${completed}</b><br>
+                Erreichbarkeit: <span class="${color}" style="font-size:18px;">${rate.toFixed(2)}%</span>
+                <div style="margin-top:10px; padding:10px; background:#f0f2f9; border-radius:8px; font-size:14px; color:#333; direction:rtl; text-align:right;">${msg}</div>
+            `;
+            resEl.style.display = 'block';
+        }
+
         /* ===== VERSANDKOSTEN ===== */
         function calculateVK() {
             let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
@@ -660,7 +764,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             const el = document.getElementById('sub-' + name);
             const pill = document.getElementById('pill-' + name);
             const isOpen = el.classList.contains('visible');
-            ['knowledge','vorlagen'].forEach(n => {
+            ['knowledge','vorlagen','mailhelper'].forEach(n => {
                 document.getElementById('sub-' + n).classList.remove('visible');
                 document.getElementById('pill-' + n).classList.remove('active');
             });
@@ -750,6 +854,120 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                 btn.classList.add('copied');
                 setTimeout(() => { btn.textContent = '\ud83d\udccb Kopieren'; btn.classList.remove('copied'); }, 2000);
             });
+        }
+
+
+        /* ===== MAIL HELPER ===== */
+        // Set today's date
+        (function() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2,'0');
+            const mm = String(today.getMonth()+1).padStart(2,'0');
+            const yyyy = today.getFullYear();
+            const el = document.getElementById('cv-date');
+            if (el) el.value = dd + '.' + mm + '.' + yyyy;
+
+            // Fill hours
+            const hourSel = document.getElementById('cv-hour');
+            if (hourSel) {
+                for (let h = 0; h < 24; h++) {
+                    const o = document.createElement('option');
+                    o.value = String(h).padStart(2,'0');
+                    o.text = String(h).padStart(2,'0') + ':00';
+                    hourSel.appendChild(o);
+                }
+                hourSel.value = String(today.getHours()).padStart(2,'0');
+            }
+            // Fill minutes
+            const minSel = document.getElementById('cv-minute');
+            if (minSel) {
+                for (let m = 0; m < 60; m += 5) {
+                    const o = document.createElement('option');
+                    o.value = String(m).padStart(2,'0');
+                    o.text = ':' + String(m).padStart(2,'0');
+                    minSel.appendChild(o);
+                }
+                const rounded = Math.round(today.getMinutes()/5)*5 % 60;
+                minSel.value = String(rounded).padStart(2,'0');
+            }
+        })();
+
+        let selectedCallType = '';
+
+        function toggleMailSub(name) {
+            const el = document.getElementById('sub-' + name);
+            const pill = document.getElementById('pill-' + name);
+            const isOpen = el.classList.contains('visible');
+            ['callval'].forEach(n => {
+                document.getElementById('sub-' + n).classList.remove('visible');
+                const p = document.getElementById('pill-' + n);
+                if (p) p.classList.remove('active');
+            });
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); }
+        }
+
+        function selectCallType(el, type) {
+            document.querySelectorAll('#cv-calltype-group .pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            selectedCallType = type;
+        }
+
+        function generateCallValidation() {
+            const phone = document.getElementById('cv-phone').value.trim();
+            const date  = document.getElementById('cv-date').value.trim();
+            const hour  = document.getElementById('cv-hour').value;
+            const min   = document.getElementById('cv-minute').value;
+            const desc  = document.getElementById('cv-desc').value.trim();
+            const errEl = document.getElementById('cv-error');
+
+            if (!phone || !selectedCallType || !desc) {
+                errEl.style.display = 'block';
+                return;
+            }
+            errEl.style.display = 'none';
+
+            const time = hour + ':' + min;
+
+            const prompt = `You are a professional call center documentation assistant. Your task is to fill in the following table and return it as a clean, copy-paste ready plain text table — no markdown, no extra explanation.
+
+Fill this table exactly:
+
+| Customer number | phone number | Date | Time of the call | Call Type | Issue Description |
+|---|---|---|---|---|---|
+| [leave blank] | ${phone} | ${date} | ${time} | ${selectedCallType} | [translate the following Arabic issue description into professional English suitable for a call center report: "${desc}"] |
+
+Rules:
+- Keep "Customer number" cell empty.
+- Translate the issue description from Arabic to professional English.
+- Return only the filled table, nothing else.`;
+
+            const outTA = document.getElementById('cv-prompt-output');
+            outTA.value = prompt;
+            document.getElementById('cv-result').style.display = 'block';
+            // auto resize
+            outTA.style.height = 'auto';
+            outTA.style.height = outTA.scrollHeight + 'px';
+        }
+
+        function copyPrompt(btn) {
+            const ta = document.getElementById('cv-prompt-output');
+            navigator.clipboard.writeText(ta.value).then(() => {
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => { btn.textContent = '📋 Copy Prompt'; }, 2000);
+            });
+        }
+
+        function openChatGPT() {
+            window.open('https://chat.openai.com', '_blank');
+        }
+
+        function resetCallValidation() {
+            document.getElementById('cv-phone').value = '';
+            document.getElementById('cv-desc').value = '';
+            selectedCallType = '';
+            document.querySelectorAll('#cv-calltype-group .pill').forEach(p => p.classList.remove('active'));
+            document.getElementById('cv-result').style.display = 'none';
+            document.getElementById('cv-error').style.display = 'none';
         }
 
         /* ===== RESET ===== */

@@ -117,17 +117,16 @@
     <!-- ===== STATS CARD ===== -->
     <div class="card" id="stats-card" style="max-width:700px; margin-bottom:20px;">
         <h3 style="margin-bottom:12px; font-size:16px; color:#1e3a7b;">📊 Site Statistics</h3>
-        <table style="width:100%; border-collapse:collapse; font-size:14px; direction:ltr; text-align:left;">
-            <thead>
-                <tr style="background:#1e3a7b; color:white;">
-                    <th style="padding:8px 12px; border-radius:5px 0 0 0;">Metric</th>
-                    <th style="padding:8px 12px; border-radius:0 5px 0 0; text-align:center;">Count</th>
-                </tr>
-            </thead>
-            <tbody id="stats-tbody">
-                <tr><td colspan="2" style="padding:10px; color:#888; text-align:center;">Loading...</td></tr>
-            </tbody>
-        </table>
+        <!-- Mobile: single table | PC: 2-column grid -->
+        <div id="stats-tbody" style="display:grid; grid-template-columns:1fr; gap:8px;">
+            <div style="text-align:center; color:#888; padding:10px;">Loading...</div>
+        </div>
+
+        <style>
+            @media (min-width: 700px) {
+                #stats-tbody { grid-template-columns: 1fr 1fr !important; }
+            }
+        </style>
     </div>
 
 
@@ -914,11 +913,15 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                     ['🚚 Versandkosten Used',    d['used_versandkosten'] ?? 0],
                     ['📋 Vorlagen Opened',       d['used_vorlagen'] ?? 0],
                 ];
-                tbody.innerHTML = metrics.map((m, i) => `
-                    <tr style="background:${i%2===0?'#f5f6fb':'white'};">
-                        <td style="padding:8px 12px; color:#333;">${m[0]}</td>
-                        <td style="padding:8px 12px; text-align:center; font-weight:bold; color:#1e3a7b; font-size:16px;">${m[1]}</td>
-                    </tr>
+                tbody.innerHTML = metrics.map((m) => `
+                    <div style="
+                        background:#f5f6fb; border-radius:10px; padding:12px 16px;
+                        display:flex; justify-content:space-between; align-items:center;
+                        border-left:4px solid #1e3a7b;
+                    ">
+                        <span style="color:#333; font-size:13px;">${m[0]}</span>
+                        <span style="font-weight:bold; color:#1e3a7b; font-size:20px; margin-left:10px;">${m[1]}</span>
+                    </div>
                 `).join('');
             } catch(e) {
                 document.getElementById('stats-tbody').innerHTML =
@@ -931,6 +934,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             await sbIncrement('visits_today');
             await sbIncrement('visits_total');
             await loadStats();
+            setInterval(loadStats, 30000);
         })();
 
         /* ===== RESET ===== */

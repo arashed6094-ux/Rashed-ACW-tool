@@ -90,10 +90,48 @@
         .clearfix { clear: both; }
 
         .field-group { margin-bottom: 14px; }
+
+        /* ===== PC LAYOUT ===== */
+        @media (min-width: 700px) {
+            .top-tools-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                max-width: 760px;
+                margin: 0 auto 20px auto;
+            }
+            .top-tools-grid .card {
+                margin: 0;
+            }
+            #stats-card {
+                max-width: 760px;
+            }
+        }
+        @media (max-width: 699px) {
+            .top-tools-grid { display: block; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- ===== STATS CARD ===== -->
+    <div class="card" id="stats-card" style="max-width:700px; margin-bottom:20px;">
+        <h3 style="margin-bottom:12px; font-size:16px; color:#1e3a7b;">📊 Site Statistics</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:14px; direction:ltr; text-align:left;">
+            <thead>
+                <tr style="background:#1e3a7b; color:white;">
+                    <th style="padding:8px 12px; border-radius:5px 0 0 0;">Metric</th>
+                    <th style="padding:8px 12px; border-radius:0 5px 0 0; text-align:center;">Count</th>
+                </tr>
+            </thead>
+            <tbody id="stats-tbody">
+                <tr><td colspan="2" style="padding:10px; color:#888; text-align:center;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+
+    <div class="top-tools-grid">
     <!-- ===== CARD 1: ACW Tool ===== -->
     <div class="card">
         <h3>Rashed ACW tool</h3>
@@ -117,6 +155,8 @@
         <button class="main-btn" onclick="calculateErreich()">Erreichbarkeit berechnen</button>
         <div id="erreich-result"></div>
     </div>
+
+    </div><!-- end top-tools-grid -->
 
     <!-- ===== CARD 2: Versandkosten ===== -->
     <div class="card">
@@ -625,7 +665,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
         }
 
-        function calculate() {
+        function calculate() { sbIncrement('used_acw');
             const s1 = toSeconds(document.getElementById('t1').value);
             const s2 = toSeconds(document.getElementById('t2').value);
             const s3 = toSeconds(document.getElementById('t3').value);
@@ -649,7 +689,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
 
         /* ===== ERREICHBARKEIT ===== */
-        function calculateErreich() {
+        function calculateErreich() { sbIncrement('used_erreichbarkeit');
             const total   = parseInt(document.getElementById('total-calls').value) || 0;
             const dropped = parseInt(document.getElementById('dropped-calls').value) || 0;
             const resEl   = document.getElementById('erreich-result');
@@ -689,7 +729,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         }
 
         /* ===== VERSANDKOSTEN ===== */
-        function calculateVK() {
+        function calculateVK() { if(document.getElementById('order_before').value.trim()) sbIncrement('used_versandkosten');
             let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
             let beforeRaw = document.getElementById('order_before').value.replace(',', '.');
             const vk = parseFloat(vkRaw) || 0;
@@ -720,7 +760,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             });
             resetSubLevel();
             hideAllContent();
-            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); }
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') sbIncrement('used_vorlagen'); }
         }
 
         function toggleSub(name) {
@@ -734,7 +774,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             resetWivoLevel();
             showWivoItems();
             hideAllContent();
-            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); }
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') sbIncrement('used_vorlagen'); }
         }
 
         function selectWivoParent(pillEl, name) {
@@ -805,6 +845,94 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                 setTimeout(() => { btn.textContent = '\ud83d\udccb Kopieren'; btn.classList.remove('copied'); }, 2000);
             });
         }
+
+        /* ===== SUPABASE STATS ===== */
+        const SB_URL = 'https://dhnxkshblavokipiafsi.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRobnhrc2hibGF2b2tpcGlhZnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzgxMjYsImV4cCI6MjA5ODIxNDEyNn0.gZ27O1-0IXAmk47YnnsfdwL8KwX2A2R1O78W1hv9XAI';
+
+        async function sbGet(key) {
+            const res = await fetch(`${SB_URL}/rest/v1/stats?key=eq.${key}&select=value`, {
+                headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+            });
+            const data = await res.json();
+            return data[0]?.value ?? 0;
+        }
+
+        async function sbIncrement(key) {
+            const current = await sbGet(key);
+            await fetch(`${SB_URL}/rest/v1/stats?key=eq.${key}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SB_KEY,
+                    'Authorization': 'Bearer ' + SB_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ value: current + 1 })
+            });
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${SB_URL}/rest/v1/stats?select=key,value`, {
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                });
+                const rows = await res.json();
+                const d = {};
+                rows.forEach(r => d[r.key] = r.value);
+
+                // Check if visits_today needs reset
+                const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+                const todayNum = parseInt(today);
+                if (d['last_reset_date'] !== todayNum) {
+                    await fetch(`${SB_URL}/rest/v1/stats?key=eq.visits_today`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SB_KEY,
+                            'Authorization': 'Bearer ' + SB_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ value: 0 })
+                    });
+                    await fetch(`${SB_URL}/rest/v1/stats?key=eq.last_reset_date`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SB_KEY,
+                            'Authorization': 'Bearer ' + SB_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ value: todayNum })
+                    });
+                    d['visits_today'] = 0;
+                }
+
+                const tbody = document.getElementById('stats-tbody');
+                const metrics = [
+                    ['🌐 Visits Today',         d['visits_today'] ?? 0],
+                    ['📈 Total Visits',          d['visits_total'] ?? 0],
+                    ['⏱️ ACW Tool Used',         d['used_acw'] ?? 0],
+                    ['📉 Erreichbarkeit Used',   d['used_erreichbarkeit'] ?? 0],
+                    ['🚚 Versandkosten Used',    d['used_versandkosten'] ?? 0],
+                    ['📋 Vorlagen Opened',       d['used_vorlagen'] ?? 0],
+                ];
+                tbody.innerHTML = metrics.map((m, i) => `
+                    <tr style="background:${i%2===0?'#f5f6fb':'white'};">
+                        <td style="padding:8px 12px; color:#333;">${m[0]}</td>
+                        <td style="padding:8px 12px; text-align:center; font-weight:bold; color:#1e3a7b; font-size:16px;">${m[1]}</td>
+                    </tr>
+                `).join('');
+            } catch(e) {
+                document.getElementById('stats-tbody').innerHTML =
+                    '<tr><td colspan="2" style="padding:10px; color:#c0272d; text-align:center;">Could not load stats</td></tr>';
+            }
+        }
+
+        // Track visit on page load
+        (async function() {
+            await sbIncrement('visits_today');
+            await sbIncrement('visits_total');
+            await loadStats();
+        })();
+
         /* ===== RESET ===== */
         function resetVorlage(btn) {
             const fieldGroup = btn.closest('.field-group');

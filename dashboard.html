@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Performance Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 15px; color: #333; }
+        h1 { text-align:center; color:#1e3a7b; font-size:20px; margin-bottom:4px; }
+        .subtitle { text-align:center; color:#888; font-size:12px; margin-bottom:20px; }
+
+        .card { background:white; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:20px; margin-bottom:16px; max-width:900px; margin-left:auto; margin-right:auto; }
+
+        /* Controls */
+        .controls { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:16px; }
+        .pill-btn {
+            padding:8px 18px; border-radius:20px; border:2px solid #1e3a7b;
+            background:white; color:#1e3a7b; font-size:13px; font-weight:bold;
+            cursor:pointer; transition:all 0.2s;
+        }
+        .pill-btn:hover, .pill-btn.active { background:#1e3a7b; color:white; }
+        .pill-btn.red { border-color:#c0272d; color:#c0272d; }
+        .pill-btn.red:hover, .pill-btn.red.active { background:#c0272d; color:white; }
+
+        /* Chart container */
+        .chart-wrap { position:relative; height:300px; }
+
+        /* Note */
+        .disclaimer {
+            font-size:11px; color:#aaa; text-align:center; margin-top:10px;
+            border-top:1px solid #eee; padding-top:10px; direction:ltr;
+        }
+
+        /* Summary boxes */
+        .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+        @media(min-width:600px) { .summary-grid { grid-template-columns: repeat(4,1fr); } }
+        .summary-box {
+            background:#f5f6fb; border-radius:10px; padding:12px;
+            border-left:4px solid #1e3a7b; text-align:center;
+        }
+        .summary-box .num { font-size:24px; font-weight:bold; color:#1e3a7b; }
+        .summary-box .lbl { font-size:11px; color:#888; margin-top:4px; }
+
+        /* View toggle */
+        select {
+            padding:8px 12px; border:2px solid #1e3a7b; border-radius:20px;
+            font-size:13px; color:#1e3a7b; font-weight:bold; cursor:pointer; background:white;
+        }
+
+        .back-btn {
+            display:inline-block; margin-bottom:16px; padding:8px 18px;
+            background:#1e3a7b; color:white; border:none; border-radius:20px;
+            font-size:13px; font-weight:bold; cursor:pointer; text-decoration:none;
+        }
+    </style>
+</head>
+<body>
+
+<button class="back-btn" onclick="history.back()">← Back</button>
+
+<h1>📈 Team Performance Dashboard</h1>
+<p class="subtitle">Live stats from Supabase · auto-refreshes every 60s</p>
+
+<!-- Summary -->
+<div class="card">
+    <div class="summary-grid" id="summary-grid">
+        <div class="summary-box"><div class="num" id="s-total">—</div><div class="lbl">Total Visits</div></div>
+        <div class="summary-box"><div class="num" id="s-today">—</div><div class="lbl">Visits Today</div></div>
+        <div class="summary-box"><div class="num" id="s-orders">—</div><div class="lbl">Orders (Versandkosten)</div></div>
+        <div class="summary-box"><div class="num" id="s-service">—</div><div class="lbl">Service Calls (Vorlagen)</div></div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card">
+    <div class="controls">
+        <!-- Time range -->
+        <div>
+            <button class="pill-btn active" id="btn-week" onclick="setRange('week')">This Week</button>
+            <button class="pill-btn" id="btn-month" onclick="setRange('month')">This Month</button>
+            <button class="pill-btn" id="btn-day" onclick="setRange('day')">By Hour</button>
+        </div>
+
+        <!-- Day picker (shown only in day mode) -->
+        <input type="date" id="day-picker" style="display:none; padding:7px 12px; border:2px solid #1e3a7b; border-radius:20px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+
+        <!-- Data toggle -->
+        <div>
+            <button class="pill-btn active" id="btn-both" onclick="setData('both')">Combined</button>
+            <button class="pill-btn" id="btn-orders-only" onclick="setData('orders')">Orders Only</button>
+            <button class="pill-btn red" id="btn-service-only" onclick="setData('service')">Service Only</button>
+        </div>
+    </div>
+
+    <div class="chart-wrap">
+        <canvas id="mainChart"></canvas>
+    </div>
+
+    <p class="disclaimer">
+        ⚠️ This chart is an approximation. Not all service calls are captured, and numbers depend on how many agents use the tool. Use as an indicator only.
+    </p>
+</div>
+
+<script>
+    const SB_URL = 'https://dhnxkshblavokipiafsi.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRobnhrc2hibGF2b2tpcGlhZnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzgxMjYsImV4cCI6MjA5ODIxNDEyNn0.gZ27O1-0IXAmk47YnnsfdwL8KwX2A2R1O78W1hv9XAI';
+
+    let currentRange = 'week';
+    let currentData  = 'both';
+    let chart = null;
+
+    // ── helpers ──────────────────────────────────────────────
+    function getColor(value, max) {
+        const ratio = max > 0 ? value / max : 0;
+        if (ratio >= 0.8) return { bg: 'rgba(192,39,45,0.8)',  border: '#c0272d' };
+        if (ratio >= 0.5) return { bg: 'rgba(243,156,18,0.8)', border: '#f39c12' };
+        return              { bg: 'rgba(30,58,123,0.7)',   border: '#1e3a7b' };
+    }
+
+    async function sbFetch(path) {
+        const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
+            headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        });
+        return r.json();
+    }
+
+    // ── summary ───────────────────────────────────────────────
+    async function loadSummary() {
+        const rows = await sbFetch('stats?select=key,value');
+        const d = {};
+        rows.forEach(r => d[r.key] = r.value);
+        document.getElementById('s-total').textContent   = d['visits_total']       ?? 0;
+        document.getElementById('s-today').textContent   = d['visits_today']       ?? 0;
+        document.getElementById('s-orders').textContent  = d['used_versandkosten'] ?? 0;
+        document.getElementById('s-service').textContent = d['used_vorlagen']      ?? 0;
+    }
+
+    // ── chart data ────────────────────────────────────────────
+    async function loadChart() {
+        let labels = [], ordersData = [], serviceData = [];
+
+        if (currentRange === 'week' || currentRange === 'month') {
+            const days = currentRange === 'week' ? 7 : 30;
+            const from = new Date();
+            from.setDate(from.getDate() - days + 1);
+            const fromStr = from.toISOString().slice(0,10);
+
+            const rows = await sbFetch(
+                `hourly_stats?select=stat_key,day,count&day=gte.${fromStr}&order=day.asc`
+            );
+
+            // group by day
+            const map = {};
+            rows.forEach(r => {
+                if (!map[r.day]) map[r.day] = { versandkosten: 0, vorlagen: 0 };
+                map[r.day][r.stat_key] = (map[r.day][r.stat_key] || 0) + r.count;
+            });
+
+            // fill all days
+            for (let i = 0; i < days; i++) {
+                const d = new Date(from);
+                d.setDate(from.getDate() + i);
+                const key = d.toISOString().slice(0,10);
+                const label = d.toLocaleDateString([], {weekday:'short', day:'2-digit', month:'2-digit'});
+                labels.push(label);
+                ordersData.push(map[key]?.versandkosten || 0);
+                serviceData.push(map[key]?.vorlagen     || 0);
+            }
+
+        } else {
+            // by hour for selected day
+            const day = document.getElementById('day-picker').value || new Date().toISOString().slice(0,10);
+            const rows = await sbFetch(
+                `hourly_stats?select=stat_key,hour,count&day=eq.${day}&order=hour.asc`
+            );
+            const map = {};
+            rows.forEach(r => {
+                if (!map[r.hour]) map[r.hour] = { versandkosten: 0, vorlagen: 0 };
+                map[r.hour][r.stat_key] = (map[r.hour][r.stat_key] || 0) + r.count;
+            });
+            for (let h = 0; h < 24; h++) {
+                labels.push(`${String(h).padStart(2,'0')}:00`);
+                ordersData.push(map[h]?.versandkosten || 0);
+                serviceData.push(map[h]?.vorlagen     || 0);
+            }
+        }
+
+        // build combined if needed
+        const combinedData = ordersData.map((v,i) => v + serviceData[i]);
+        const maxVal = Math.max(...(currentData === 'both' ? combinedData : currentData === 'orders' ? ordersData : serviceData), 1);
+
+        // color each bar by intensity
+        function colorBars(arr) {
+            return arr.map(v => getColor(v, maxVal).bg);
+        }
+        function borderBars(arr) {
+            return arr.map(v => getColor(v, maxVal).border);
+        }
+
+        let datasets = [];
+        if (currentData === 'both') {
+            datasets = [{
+                label: 'Orders + Service Calls',
+                data: combinedData,
+                backgroundColor: colorBars(combinedData),
+                borderColor: borderBars(combinedData),
+                borderWidth: 2, borderRadius: 6,
+            }];
+        } else if (currentData === 'orders') {
+            datasets = [{
+                label: 'Orders (Versandkosten)',
+                data: ordersData,
+                backgroundColor: colorBars(ordersData),
+                borderColor: borderBars(ordersData),
+                borderWidth: 2, borderRadius: 6,
+            }];
+        } else {
+            datasets = [{
+                label: 'Service Calls (Vorlagen)',
+                data: serviceData,
+                backgroundColor: colorBars(serviceData),
+                borderColor: borderBars(serviceData),
+                borderWidth: 2, borderRadius: 6,
+            }];
+        }
+
+        if (chart) chart.destroy();
+        chart = new Chart(document.getElementById('mainChart'), {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: ctx => {
+                                const v = ctx.raw;
+                                const max = Math.max(...ctx.dataset.data, 1);
+                                const pct = ((v/max)*100).toFixed(0);
+                                return `Intensity: ${pct}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: '#f0f0f0' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    function setRange(r) {
+        currentRange = r;
+        ['week','month','day'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===r));
+        document.getElementById('day-picker').style.display = r === 'day' ? 'inline-block' : 'none';
+        loadChart();
+    }
+
+    function setData(d) {
+        currentData = d;
+        ['both','orders-only','service-only'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x === (d==='both'?'both':d==='orders'?'orders-only':'service-only')));
+        loadChart();
+    }
+
+    // Set day picker default to today
+    document.getElementById('day-picker').value = new Date().toISOString().slice(0,10);
+    document.getElementById('day-picker').addEventListener('change', loadChart);
+
+    // Init
+    loadSummary();
+    loadChart();
+    setInterval(() => { loadSummary(); loadChart(); }, 60000);
+</script>
+</body>
+</html>

@@ -157,6 +157,30 @@
 
     </div><!-- end top-tools-grid -->
 
+
+    <!-- ===== NOTES CARD ===== -->
+    <div class="card" id="notes-card" style="max-width:700px; margin-bottom:20px;">
+        <h3 style="margin-bottom:4px; font-size:16px; color:#1e3a7b;">📌 Team Notes</h3>
+        <p style="font-size:11px; color:#888; margin:0 0 12px 0; direction:ltr; text-align:left;">
+            ⚠️ This area is for quick team messages — e.g. Citrix issues, Yuutel outages, or important updates visible to all agents.
+        </p>
+        <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:220px; overflow-y:auto;">
+            <div style="text-align:center; color:#888; font-size:13px; padding:10px;">Loading notes...</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="note-input" placeholder="Write a note for the team..." maxlength="200"
+                style="flex:1; padding:9px 12px; border:2px solid #ccc; border-radius:20px; font-size:13px;
+                box-sizing:border-box; direction:ltr; text-align:left; outline:none;"
+                onfocus="this.style.borderColor='#1e3a7b'" onblur="this.style.borderColor='#ccc'"
+                onkeydown="if(event.key==='Enter') addNote()">
+            <button onclick="addNote()" style="
+                padding:9px 18px; background:#1e3a7b; color:white; border:none;
+                border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">
+                Send ✉️
+            </button>
+        </div>
+    </div>
+
     <!-- ===== CARD 2: Versandkosten ===== -->
     <div class="card">
         <h3>Versandkosten-Rechner</h3>
@@ -941,6 +965,93 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             await loadStats();
             setInterval(loadStats, 30000);
         })();
+
+
+        /* ===== NOTES ===== */
+        const NOTE_COLORS = [
+            { bg: '#e8f4fd', border: '#2980b9', text: '#1a5276' },
+            { bg: '#fef9e7', border: '#f39c12', text: '#7d6608' },
+            { bg: '#eafaf1', border: '#27ae60', text: '#1e8449' },
+            { bg: '#fdf2f8', border: '#8e44ad', text: '#6c3483' },
+            { bg: '#fdedec', border: '#e74c3c', text: '#922b21' },
+            { bg: '#eaf2ff', border: '#1e3a7b', text: '#1e3a7b' },
+        ];
+
+        function getColorForId(id) {
+            return NOTE_COLORS[id % NOTE_COLORS.length];
+        }
+
+        async function loadNotes() {
+            try {
+                const res = await fetch(`${SB_URL}/rest/v1/notes?select=id,text,created_at&order=created_at.desc&limit=20`, {
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                });
+                const notes = await res.json();
+                const list = document.getElementById('notes-list');
+                if (!notes.length) {
+                    list.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; padding:10px;">No notes yet. Be the first to write one!</div>';
+                    return;
+                }
+                list.innerHTML = notes.map(n => {
+                    const c = getColorForId(n.id);
+                    const time = new Date(n.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    const date = new Date(n.created_at).toLocaleDateString([], {day:'2-digit', month:'2-digit'});
+                    return `<div style="
+                        background:${c.bg}; border-left:4px solid ${c.border};
+                        border-radius:8px; padding:9px 12px; direction:ltr; text-align:left;
+                        display:flex; justify-content:space-between; align-items:center; gap:8px;
+                    ">
+                        <span style="color:${c.text}; font-size:13px; flex:1;">${n.text}</span>
+                        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                            <span style="font-size:11px; color:#aaa;">${date} ${time}</span>
+                            <button onclick="deleteNote(${n.id}, this)" style="
+                                background:none; border:none; cursor:pointer; color:#ccc;
+                                font-size:14px; padding:0; line-height:1;" title="Delete">✕</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                document.getElementById('notes-list').innerHTML =
+                    '<div style="color:#c0272d; font-size:13px; text-align:center;">Could not load notes.</div>';
+            }
+        }
+
+        async function addNote() {
+            const input = document.getElementById('note-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            input.disabled = true;
+            try {
+                await fetch(`${SB_URL}/rest/v1/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ text, color: 'auto' })
+                });
+                await loadNotes();
+            } catch(e) {}
+            input.disabled = false;
+            input.focus();
+        }
+
+        async function deleteNote(id, btn) {
+            btn.disabled = true;
+            try {
+                await fetch(`${SB_URL}/rest/v1/notes?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                });
+                await loadNotes();
+            } catch(e) { btn.disabled = false; }
+        }
+
+        // Auto-refresh notes every 30 seconds
+        loadNotes();
+        setInterval(loadNotes, 30000);
+
 
         /* ===== RESET ===== */
         function resetVorlage(btn) {

@@ -766,7 +766,10 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         function calculateVK() {
             clearTimeout(vkTimer);
             if(document.getElementById('order_before').value.trim()) {
-                vkTimer = setTimeout(() => sbIncrement('used_versandkosten'), 1500);
+                vkTimer = setTimeout(() => {
+                    sbIncrement('used_versandkosten');
+                    sbIncrementHourly('versandkosten');
+                }, 1500);
             }
             let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
             let beforeRaw = document.getElementById('order_before').value.replace(',', '.');
@@ -798,7 +801,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             });
             resetSubLevel();
             hideAllContent();
-            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') sbIncrement('used_vorlagen'); }
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') { sbIncrement('used_vorlagen'); sbIncrementHourly('vorlagen'); } }
         }
 
         function toggleSub(name) {
@@ -812,7 +815,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             resetWivoLevel();
             showWivoItems();
             hideAllContent();
-            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') sbIncrement('used_vorlagen'); }
+            if (!isOpen) { el.classList.add('visible'); pill.classList.add('active'); if(name==='vorlagen') { sbIncrement('used_vorlagen'); sbIncrementHourly('vorlagen'); } }
         }
 
         function selectWivoParent(pillEl, name) {
@@ -976,6 +979,49 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             setInterval(loadStats, 30000);
         })();
 
+
+
+        /* ===== HOURLY TRACKING ===== */
+        async function sbIncrementHourly(statKey) {
+            try {
+                const now = new Date();
+                const day = now.toISOString().slice(0,10);
+                const hour = now.getHours();
+
+                // Check if row exists
+                const res = await fetch(
+                    `${SB_URL}/rest/v1/hourly_stats?stat_key=eq.${statKey}&day=eq.${day}&hour=eq.${hour}&select=id,count`,
+                    { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+                );
+                const rows = await res.json();
+
+                if (rows.length > 0) {
+                    // Update existing row
+                    await fetch(
+                        `${SB_URL}/rest/v1/hourly_stats?id=eq.${rows[0].id}`,
+                        {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ count: rows[0].count + 1 })
+                        }
+                    );
+                } else {
+                    // Insert new row
+                    await fetch(`${SB_URL}/rest/v1/hourly_stats`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({ stat_key: statKey, day, hour, count: 1 })
+                    });
+                }
+            } catch(e) { console.log('hourly track error', e); }
+        }
 
         /* ===== NOTES ===== */
         const NOTE_COLORS = [

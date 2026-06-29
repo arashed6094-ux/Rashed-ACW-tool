@@ -728,7 +728,12 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         }
 
         /* ===== VERSANDKOSTEN ===== */
-        function calculateVK() { if(document.getElementById('order_before').value.trim()) sbIncrement('used_versandkosten');
+        let vkTimer = null;
+        function calculateVK() {
+            clearTimeout(vkTimer);
+            if(document.getElementById('order_before').value.trim()) {
+                vkTimer = setTimeout(() => sbIncrement('used_versandkosten'), 1500);
+            }
             let vkRaw = document.getElementById('vk_amount').value.replace(',', '.');
             let beforeRaw = document.getElementById('order_before').value.replace(',', '.');
             const vk = parseFloat(vkRaw) || 0;

@@ -133,21 +133,30 @@
     <!-- ===== NOTES CARD ===== -->
     <div class="card" id="notes-card" style="max-width:700px; margin-bottom:20px;">
         <h3 style="margin-bottom:4px; font-size:16px; color:#1e3a7b;">📌 Team Notes</h3>
-        <p style="font-size:11px; color:#888; margin:0 0 12px 0; direction:ltr; text-align:left;">
+        <p style="font-size:11px; color:#888; margin:0 0 10px 0; direction:ltr; text-align:left;">
             ⚠️ This area is for quick team messages — e.g. Citrix issues, Yuutel outages, or important updates visible to all agents.
         </p>
-        <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:220px; overflow-y:auto;">
+
+        <!-- Username bar -->
+        <div id="username-bar" style="margin-bottom:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; color:#888;">Posting as:</span>
+            <span id="current-username" style="font-size:13px; font-weight:bold; color:#1e3a7b; background:#eaf2ff; padding:4px 12px; border-radius:14px;">—</span>
+            <button onclick="changeUsername()" style="font-size:11px; color:#888; background:none; border:none; cursor:pointer; text-decoration:underline;">change</button>
+        </div>
+
+        <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:320px; overflow-y:auto;">
             <div style="text-align:center; color:#888; font-size:13px; padding:10px;">Loading notes...</div>
         </div>
         <div style="display:flex; gap:8px;">
-            <input type="text" id="note-input" placeholder="Write a note for the team..." maxlength="200"
-                style="flex:1; padding:9px 12px; border:2px solid #ccc; border-radius:20px; font-size:13px;
-                box-sizing:border-box; direction:ltr; text-align:left; outline:none;"
+            <textarea id="note-input" placeholder="Write a note for the team..." maxlength="500" rows="1"
+                style="flex:1; padding:9px 12px; border:2px solid #ccc; border-radius:16px; font-size:13px;
+                box-sizing:border-box; outline:none; resize:none; overflow:hidden; font-family:Arial,sans-serif; line-height:1.4;"
                 onfocus="this.style.borderColor='#1e3a7b'" onblur="this.style.borderColor='#ccc'"
-                onkeydown="if(event.key==='Enter') addNote()">
+                oninput="autoResizeNote(this); detectNoteDir(this);"
+                onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addNote();}"></textarea>
             <button onclick="addNote()" style="
                 padding:9px 18px; background:#1e3a7b; color:white; border:none;
-                border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">
+                border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap; align-self:flex-end;">
                 Send ✉️
             </button>
         </div>
@@ -163,16 +172,25 @@
         </button>
     </div>
     <div class="top-tools-grid">
-    <!-- ===== CARD 1: ACW Tool ===== -->
+    <!-- ===== CARD 1: AHT Tool ===== -->
     <div class="card">
-        <h3>Rashed ACW tool</h3>
+        <h3>Rashed AHT tool</h3>
+        <label style="display:block; text-align:right; font-size:13px; color:#666; margin-bottom:2px; font-weight:bold;">Average Talk Time (MM:SS):</label>
+        <input type="text" id="talk-time" placeholder="00:00" maxlength="5"
+            style="text-align:center; letter-spacing:2px;"
+            oninput="formatTalkTime(this)">
+        <label style="display:block; text-align:right; font-size:13px; color:#666; margin-top:8px; margin-bottom:2px; font-weight:bold;">ACW Timestamps:</label>
         <input type="text" id="t1" placeholder="توقيت 1 (HHMMSS)" maxlength="8">
         <input type="text" id="t2" placeholder="توقيت 2 (HHMMSS)" maxlength="8">
         <input type="text" id="t3" placeholder="توقيت 3 (HHMMSS)" maxlength="8">
         <input type="text" id="t4" placeholder="توقيت 4 (HHMMSS)" maxlength="8">
         <input type="number" id="calls" placeholder="عدد المكالمات">
-        <button class="main-btn" onclick="calculate()">احسب النتيجة</button>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+            <button class="main-btn" onclick="calculateACW()" style="flex:1; font-size:14px;">احسب ACW</button>
+            <button class="main-btn" onclick="calculateAHT()" style="flex:1; background:#c0272d; font-size:14px;">احسب AHT</button>
+        </div>
         <div id="result"></div>
+        <div id="result-aht" style="margin-top:20px; text-align:right; background:#e9ecef; padding:10px; border-radius:5px; display:none;"></div>
     </div>
 
 
@@ -674,7 +692,20 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
     </div>
 
     <script>
-        /* ===== ACW TOOL ===== */
+        /* ===== AHT TOOL ===== */
+
+        // Auto-format Talk Time as MM:SS
+        function formatTalkTime(input) {
+            let digits = input.value.replace(/\D/g, '');
+            if (digits.length > 4) digits = digits.slice(0, 4);
+            if (digits.length > 2) {
+                input.value = digits.slice(0, 2) + ':' + digits.slice(2);
+            } else {
+                input.value = digits;
+            }
+        }
+
+        // Auto-format ACW timestamps HH:MM:SS
         function formatTime(e) {
             if (e.inputType === 'deleteContentBackward') return;
             let value = e.target.value.replace(/\D/g, '');
@@ -695,22 +726,35 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         function toSeconds(t) {
             if (!t || !t.includes(':')) return 0;
             const parts = t.split(':');
-            return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+            if (parts.length === 2) return (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
+            return (parseInt(parts[0])||0)*3600 + (parseInt(parts[1])||0)*60 + (parseInt(parts[2])||0);
         }
 
-        function calculate() { sbIncrement('used_acw');
+        function getACWData() {
             const s1 = toSeconds(document.getElementById('t1').value);
             const s2 = toSeconds(document.getElementById('t2').value);
             const s3 = toSeconds(document.getElementById('t3').value);
             const s4 = toSeconds(document.getElementById('t4').value);
             const totalSec = s1 + s2 + s3 + s4;
             const calls = parseInt(document.getElementById('calls').value) || 0;
+            return { totalSec, calls };
+        }
+
+        function formatMMSS(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.round(sec % 60);
+            return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function calculateACW() {
+            sbIncrement('used_acw');
+            const { totalSec, calls } = getACWData();
             if (calls === 0) { alert("برجاء إدخال عدد المكالمات أولاً"); return; }
-            const aht = totalSec / calls;
+            const acw = totalSec / calls;
             const target = 30;
-            let html = `إجمالي الوقت: <b>${Math.floor(totalSec/3600)}h:${Math.floor((totalSec%3600)/60)}m:${totalSec%60}s</b><br>`;
-            html += `المتوسط الحالي: <span class="${aht <= target ? 'green' : 'red'}">${aht.toFixed(2)} ثانية</span><br>`;
-            if (aht > target) {
+            let html = `إجمالي وقت ACW: <b>${Math.floor(totalSec/3600)}h ${Math.floor((totalSec%3600)/60)}m ${totalSec%60}s</b><br>`;
+            html += `متوسط ACW: <span class="${acw <= target ? 'green' : 'red'}">${acw.toFixed(2)} ثانية</span><br>`;
+            if (acw > target) {
                 const req = Math.ceil(totalSec / target) - calls;
                 html += `<hr>محتاج تعمل <b>${req}</b> مكالمة زيادة عشان توصل لـ 30 ثانية.`;
             } else {
@@ -718,6 +762,41 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             }
             document.getElementById('result').innerHTML = html;
             document.getElementById('result').style.display = 'block';
+            document.getElementById('result-aht').style.display = 'none';
+        }
+
+        function calculateAHT() {
+            sbIncrement('used_acw');
+            const { totalSec, calls } = getACWData();
+            if (calls === 0) { alert("برجاء إدخال عدد المكالمات أولاً"); return; }
+
+            // Parse talk time
+            const ttVal = document.getElementById('talk-time').value.trim();
+            if (!ttVal || !ttVal.includes(':')) { alert("برجاء إدخال متوسط Talk Time أولاً (MM:SS)"); return; }
+            const ttParts = ttVal.split(':');
+            const talkSec = (parseInt(ttParts[0])||0)*60 + (parseInt(ttParts[1])||0);
+
+            const acwSec = totalSec / calls;
+            const ahtSec = talkSec + acwSec;
+            const targetSec = 4 * 60 + 30; // 4:30 = 270 seconds
+
+            let html = `متوسط Talk Time: <b>${formatMMSS(talkSec)}</b><br>`;
+            html += `متوسط ACW: <b>${acwSec.toFixed(1)} ثانية</b><br>`;
+            html += `<hr>`;
+            html += `نتيجة AHT: <span class="${ahtSec <= targetSec ? 'green' : 'red'}" style="font-size:18px; font-weight:bold;">${formatMMSS(ahtSec)}</span><br>`;
+
+            if (ahtSec <= targetSec) {
+                html += `<span class="green">عاش يا بطل! أنت محقق التارجت 🎯</span>`;
+            } else {
+                const overSec = ahtSec - targetSec;
+                const reducePerCall = overSec / calls;
+                html += `<span class="red">التارجت هو 04:30 — أنت تجاوزته بـ ${overSec.toFixed(0)} ثانية.</span><br>`;
+                html += `كنا محتاجين نقلل كل مكالمة بـ <b style="color:#c0272d;">${reducePerCall.toFixed(1)} ثانية</b> عشان نوصل للتارجت.`;
+            }
+
+            document.getElementById('result-aht').innerHTML = html;
+            document.getElementById('result-aht').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
         }
 
 
@@ -1023,6 +1102,64 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             } catch(e) { console.log('hourly track error', e); }
         }
 
+        /* ===== USERNAME SYSTEM ===== */
+        function getUsername() {
+            return localStorage.getItem('rashed_username') || null;
+        }
+
+        function setUsername(name) {
+            localStorage.setItem('rashed_username', name);
+            document.getElementById('current-username').textContent = name;
+        }
+
+        function promptUsername() {
+            let name = '';
+            while (!name) {
+                name = prompt('Enter your name to post notes (e.g. Ahmed, Sara...):');
+                if (name === null) { name = 'Guest'; break; }
+                name = name.trim();
+            }
+            setUsername(name);
+        }
+
+        function changeUsername() {
+            const newName = prompt('Change your name:', getUsername() || '');
+            if (newName && newName.trim()) {
+                setUsername(newName.trim());
+            }
+        }
+
+        function initUsername() {
+            let name = getUsername();
+            if (!name) {
+                promptUsername();
+            } else {
+                document.getElementById('current-username').textContent = name;
+            }
+        }
+
+        /* ===== AUTO RESIZE & RTL/LTR DETECTION FOR NOTE INPUT ===== */
+        function autoResizeNote(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+
+        function detectNoteDir(ta) {
+            const arabicPattern = /[\u0600-\u06FF]/;
+            if (arabicPattern.test(ta.value)) {
+                ta.style.direction = 'rtl';
+                ta.style.textAlign = 'right';
+            } else {
+                ta.style.direction = 'ltr';
+                ta.style.textAlign = 'left';
+            }
+        }
+
+        function detectTextDir(text) {
+            const arabicPattern = /[\u0600-\u06FF]/;
+            return arabicPattern.test(text) ? 'rtl' : 'ltr';
+        }
+
         /* ===== NOTES ===== */
         const NOTE_COLORS = [
             { bg: '#e8f4fd', border: '#2980b9', text: '#1a5276' },
@@ -1033,13 +1170,17 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             { bg: '#eaf2ff', border: '#1e3a7b', text: '#1e3a7b' },
         ];
 
-        function getColorForId(id) {
-            return NOTE_COLORS[id % NOTE_COLORS.length];
+        const REACTIONS = ['👍', '❤️', '😂', '⚠️', '✅'];
+
+        function getColorForUser(username) {
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            return NOTE_COLORS[Math.abs(hash) % NOTE_COLORS.length];
         }
 
         async function loadNotes() {
             try {
-                const res = await fetch(`${SB_URL}/rest/v1/notes?select=id,text,created_at&order=created_at.desc&limit=20`, {
+                const res = await fetch(`${SB_URL}/rest/v1/notes?select=id,text,username,reactions,created_at&order=created_at.desc&limit=30`, {
                     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
                 });
                 const notes = await res.json();
@@ -1048,22 +1189,42 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                     list.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px; padding:10px;">No notes yet. Be the first to write one!</div>';
                     return;
                 }
+                const myName = getUsername() || 'Guest';
                 list.innerHTML = notes.map(n => {
-                    const c = getColorForId(n.id);
-                    const time = new Date(n.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    const date = new Date(n.created_at).toLocaleDateString([], {day:'2-digit', month:'2-digit'});
+                    const username = n.username || 'Unknown';
+                    const c = getColorForUser(username);
+                    const dir = detectTextDir(n.text);
+                    const dateObj = new Date(n.created_at);
+                    const time = dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    const dateShort = dateObj.toLocaleDateString([], {day:'2-digit', month:'2-digit'});
+                    const reactions = n.reactions || {};
+
+                    const reactionBtns = REACTIONS.map(emoji => {
+                        const users = reactions[emoji] || [];
+                        const count = users.length;
+                        const reacted = users.includes(myName);
+                        return `<button onclick="toggleReaction(${n.id}, '${emoji}', this)" style="
+                            background:${reacted ? c.bg : 'white'}; border:1px solid ${reacted ? c.border : '#e0e0e0'};
+                            border-radius:12px; padding:2px 7px; font-size:12px; cursor:pointer;
+                            display:flex; align-items:center; gap:3px; transition:all 0.15s;
+                        ">${emoji}${count > 0 ? `<span style="font-size:10px; color:#888;">${count}</span>` : ''}</button>`;
+                    }).join('');
+
                     return `<div style="
                         background:${c.bg}; border-left:4px solid ${c.border};
-                        border-radius:8px; padding:9px 12px; direction:ltr; text-align:left;
-                        display:flex; justify-content:space-between; align-items:center; gap:8px;
+                        border-radius:8px; padding:10px 12px;
                     ">
-                        <span style="color:${c.text}; font-size:13px; flex:1;">${n.text}</span>
-                        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                            <span style="font-size:11px; color:#aaa;">${date} ${time}</span>
-                            <button onclick="deleteNote(${n.id}, this)" style="
-                                background:none; border:none; cursor:pointer; color:#ccc;
-                                font-size:14px; padding:0; line-height:1;" title="Delete">✕</button>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:4px;">
+                            <span style="font-size:11px; font-weight:bold; color:${c.border};">${username}</span>
+                            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                                <span style="font-size:10px; color:#aaa; white-space:nowrap;">${dateShort} · ${time}</span>
+                                <button onclick="deleteNote(${n.id}, this)" style="
+                                    background:none; border:none; cursor:pointer; color:#ccc;
+                                    font-size:13px; padding:0; line-height:1;" title="Delete">✕</button>
+                            </div>
                         </div>
+                        <div style="color:${c.text}; font-size:13px; direction:${dir}; text-align:${dir==='rtl'?'right':'left'}; margin-bottom:6px; word-break:break-word;">${n.text}</div>
+                        <div style="display:flex; gap:4px; flex-wrap:wrap;">${reactionBtns}</div>
                     </div>`;
                 }).join('');
             } catch(e) {
@@ -1076,7 +1237,9 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             const input = document.getElementById('note-input');
             const text = input.value.trim();
             if (!text) return;
+            const username = getUsername() || 'Guest';
             input.value = '';
+            input.style.height = 'auto';
             input.disabled = true;
             try {
                 await fetch(`${SB_URL}/rest/v1/notes`, {
@@ -1085,12 +1248,38 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                         'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
                         'Content-Type': 'application/json', 'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({ text, color: 'auto' })
+                    body: JSON.stringify({ text, color: 'auto', username, reactions: {} })
                 });
                 await loadNotes();
             } catch(e) {}
             input.disabled = false;
             input.focus();
+        }
+
+        async function toggleReaction(noteId, emoji, btn) {
+            const myName = getUsername() || 'Guest';
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${SB_URL}/rest/v1/notes?id=eq.${noteId}&select=reactions`, {
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                });
+                const rows = await res.json();
+                const reactions = rows[0]?.reactions || {};
+                const users = reactions[emoji] || [];
+                const idx = users.indexOf(myName);
+                if (idx >= 0) users.splice(idx, 1); else users.push(myName);
+                reactions[emoji] = users;
+
+                await fetch(`${SB_URL}/rest/v1/notes?id=eq.${noteId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reactions })
+                });
+                await loadNotes();
+            } catch(e) { btn.disabled = false; }
         }
 
         async function deleteNote(id, btn) {
@@ -1104,7 +1293,8 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             } catch(e) { btn.disabled = false; }
         }
 
-        // Auto-refresh notes every 30 seconds
+        // Init username + load notes + auto-refresh
+        initUsername();
         loadNotes();
         setInterval(loadNotes, 30000);
 

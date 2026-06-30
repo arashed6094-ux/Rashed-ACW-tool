@@ -130,19 +130,21 @@
     </div>
 
 
+    <!-- ===== USERNAME CARD ===== -->
+    <div class="card" style="max-width:700px; margin-bottom:12px; padding:14px 20px;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:13px; color:#888;">👤 Posting as:</span>
+            <span id="current-username" style="font-size:14px; font-weight:bold; color:#1e3a7b; background:#eaf2ff; padding:5px 14px; border-radius:16px;">—</span>
+            <button onclick="changeUsername()" style="font-size:12px; color:#c0272d; background:none; border:none; cursor:pointer; font-weight:bold; text-decoration:underline;">✏️ Change</button>
+        </div>
+    </div>
+
     <!-- ===== NOTES CARD ===== -->
     <div class="card" id="notes-card" style="max-width:700px; margin-bottom:20px;">
         <h3 style="margin-bottom:4px; font-size:16px; color:#1e3a7b;">📌 Team Notes</h3>
         <p style="font-size:11px; color:#888; margin:0 0 10px 0; direction:ltr; text-align:left;">
             ⚠️ This area is for quick team messages — e.g. Citrix issues, Yuutel outages, or important updates visible to all agents.
         </p>
-
-        <!-- Username bar -->
-        <div id="username-bar" style="margin-bottom:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span style="font-size:12px; color:#888;">Posting as:</span>
-            <span id="current-username" style="font-size:13px; font-weight:bold; color:#1e3a7b; background:#eaf2ff; padding:4px 12px; border-radius:14px;">—</span>
-            <button onclick="changeUsername()" style="font-size:11px; color:#888; background:none; border:none; cursor:pointer; text-decoration:underline;">change</button>
-        </div>
 
         <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:320px; overflow-y:auto;">
             <div style="text-align:center; color:#888; font-size:13px; padding:10px;">Loading notes...</div>
@@ -153,7 +155,7 @@
                 box-sizing:border-box; outline:none; resize:none; overflow:hidden; font-family:Arial,sans-serif; line-height:1.4;"
                 onfocus="this.style.borderColor='#1e3a7b'" onblur="this.style.borderColor='#ccc'"
                 oninput="autoResizeNote(this); detectNoteDir(this);"
-                onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addNote();}"></textarea>
+                onkeydown="if(event.key==='Enter' && !event.shiftKey && !isMobile()){event.preventDefault(); addNote();}"></textarea>
             <button onclick="addNote()" style="
                 padding:9px 18px; background:#1e3a7b; color:white; border:none;
                 border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap; align-self:flex-end;">
@@ -1127,6 +1129,10 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             if (newName && newName.trim()) {
                 setUsername(newName.trim());
             }
+        }
+
+        function isMobile() {
+            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         }
 
         function initUsername() {

@@ -77,14 +77,24 @@
 <div class="card">
     <div class="controls">
         <!-- Time range -->
-        <div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
             <button class="pill-btn active" id="btn-week" onclick="setRange('week')">This Week</button>
             <button class="pill-btn" id="btn-month" onclick="setRange('month')">This Month</button>
             <button class="pill-btn" id="btn-day" onclick="setRange('day')">By Hour</button>
+            <button class="pill-btn" id="btn-custom" onclick="setRange('custom')">📅 Custom Range</button>
         </div>
 
-        <!-- Day picker (shown only in day mode) -->
+        <!-- Day picker (shown only in day/hour mode) -->
         <input type="date" id="day-picker" style="display:none; padding:7px 12px; border:2px solid #1e3a7b; border-radius:20px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+
+        <!-- Custom range picker -->
+        <div id="custom-range-picker" style="display:none; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label style="font-size:13px; color:#1e3a7b; font-weight:bold;">From:</label>
+            <input type="date" id="range-from" style="padding:7px 12px; border:2px solid #1e3a7b; border-radius:20px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+            <label style="font-size:13px; color:#1e3a7b; font-weight:bold;">To:</label>
+            <input type="date" id="range-to" style="padding:7px 12px; border:2px solid #1e3a7b; border-radius:20px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+            <button onclick="loadChart()" style="padding:7px 18px; background:#1e3a7b; color:white; border:none; border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer;">▶ Show</button>
+        </div>
 
         <!-- Data toggle -->
         <div>
@@ -141,11 +151,23 @@
     async function loadChart() {
         let labels = [], ordersData = [], serviceData = [];
 
-        if (currentRange === 'week' || currentRange === 'month') {
-            const days = currentRange === 'week' ? 7 : 30;
-            const from = new Date();
-            from.setDate(from.getDate() - days + 1);
-            const fromStr = from.toISOString().slice(0,10);
+        if (currentRange === 'week' || currentRange === 'month' || currentRange === 'custom') {
+            let fromStr, days;
+            if (currentRange === 'custom') {
+                fromStr = document.getElementById('range-from').value;
+                const toStr = document.getElementById('range-to').value;
+                if (!fromStr || !toStr) return;
+                const fromD = new Date(fromStr);
+                const toD   = new Date(toStr);
+                days = Math.round((toD - fromD) / 86400000) + 1;
+                if (days < 1 || days > 365) return;
+            } else {
+                days = currentRange === 'week' ? 7 : 30;
+                const from = new Date();
+                from.setDate(from.getDate() - days + 1);
+                fromStr = from.toISOString().slice(0,10);
+            }
+            const from = new Date(fromStr);
 
             const rows = await sbFetch(
                 `hourly_stats?select=stat_key,day,count&day=gte.${fromStr}&order=day.asc`
@@ -160,8 +182,8 @@
 
             // fill all days
             for (let i = 0; i < days; i++) {
-                const d = new Date(from);
-                d.setDate(from.getDate() + i);
+                const d = new Date(fromStr);
+                d.setDate(new Date(fromStr).getDate() + i);
                 const key = d.toISOString().slice(0,10);
                 const label = d.toLocaleDateString([], {weekday:'short', day:'2-digit', month:'2-digit'});
                 labels.push(label);
@@ -200,28 +222,47 @@
         }
 
         let datasets = [];
+        const BLUE   = 'rgba(30,58,123,0.85)';
+        const RED    = 'rgba(192,39,45,0.85)';
+        const BLUE_B = '#1e3a7b';
+        const RED_B  = '#c0272d';
+
         if (currentData === 'both') {
-            datasets = [{
-                label: 'Orders + Service Calls',
-                data: combinedData,
-                backgroundColor: colorBars(combinedData),
-                borderColor: borderBars(combinedData),
-                borderWidth: 2, borderRadius: 6,
-            }];
+            // Stacked: blue (orders) + red (service)
+            datasets = [
+                {
+                    label: 'Orders (Versandkosten)',
+                    data: ordersData,
+                    backgroundColor: BLUE,
+                    borderColor: BLUE_B,
+                    borderWidth: 1,
+                    borderRadius: 0,
+                    stack: 'combined',
+                },
+                {
+                    label: 'Service Calls (Vorlagen)',
+                    data: serviceData,
+                    backgroundColor: RED,
+                    borderColor: RED_B,
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    stack: 'combined',
+                }
+            ];
         } else if (currentData === 'orders') {
             datasets = [{
                 label: 'Orders (Versandkosten)',
                 data: ordersData,
-                backgroundColor: colorBars(ordersData),
-                borderColor: borderBars(ordersData),
+                backgroundColor: BLUE,
+                borderColor: BLUE_B,
                 borderWidth: 2, borderRadius: 6,
             }];
         } else {
             datasets = [{
                 label: 'Service Calls (Vorlagen)',
                 data: serviceData,
-                backgroundColor: colorBars(serviceData),
-                borderColor: borderBars(serviceData),
+                backgroundColor: RED,
+                borderColor: RED_B,
                 borderWidth: 2, borderRadius: 6,
             }];
         }
@@ -238,11 +279,9 @@
                     legend: { display: true, position: 'top' },
                     tooltip: {
                         callbacks: {
-                            afterLabel: ctx => {
-                                const v = ctx.raw;
-                                const max = Math.max(...ctx.dataset.data, 1);
-                                const pct = ((v/max)*100).toFixed(0);
-                                return `Intensity: ${pct}%`;
+                            footer: (items) => {
+                                const total = items.reduce((s,i) => s + i.raw, 0);
+                                return `Total: ${total}`;
                             }
                         }
                     }
@@ -250,10 +289,12 @@
                 scales: {
                     y: {
                         beginAtZero: true,
+                        stacked: currentData === 'both',
                         ticks: { stepSize: 1 },
                         grid: { color: '#f0f0f0' }
                     },
                     x: {
+                        stacked: currentData === 'both',
                         grid: { display: false },
                         ticks: { font: { size: 11 } }
                     }
@@ -264,9 +305,13 @@
 
     function setRange(r) {
         currentRange = r;
-        ['week','month','day'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===r));
+        ['week','month','day','custom'].forEach(x => {
+            const btn = document.getElementById('btn-'+x);
+            if(btn) btn.classList.toggle('active', x===r);
+        });
         document.getElementById('day-picker').style.display = r === 'day' ? 'inline-block' : 'none';
-        loadChart();
+        document.getElementById('custom-range-picker').style.display = r === 'custom' ? 'flex' : 'none';
+        if (r !== 'custom') loadChart();
     }
 
     function setData(d) {
@@ -275,9 +320,13 @@
         loadChart();
     }
 
-    // Set day picker default to today
-    document.getElementById('day-picker').value = new Date().toISOString().slice(0,10);
+    // Set default values
+    const todayStr = new Date().toISOString().slice(0,10);
+    document.getElementById('day-picker').value = todayStr;
     document.getElementById('day-picker').addEventListener('change', loadChart);
+    document.getElementById('range-to').value = todayStr;
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
+    document.getElementById('range-from').value = weekAgo.toISOString().slice(0,10);
 
     // Init
     loadSummary();

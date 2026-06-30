@@ -228,7 +228,7 @@
         const RED_B  = '#c0272d';
 
         if (currentData === 'both') {
-            // Stacked: blue (orders) + red (service)
+            // Stacked: BLUE bottom (orders) + RED top (service)
             datasets = [
                 {
                     label: 'Orders (Versandkosten)',
@@ -238,6 +238,7 @@
                     borderWidth: 1,
                     borderRadius: 0,
                     stack: 'combined',
+                    order: 2,
                 },
                 {
                     label: 'Service Calls (Vorlagen)',
@@ -247,6 +248,7 @@
                     borderWidth: 1,
                     borderRadius: 4,
                     stack: 'combined',
+                    order: 1,
                 }
             ];
         } else if (currentData === 'orders') {
@@ -255,7 +257,8 @@
                 data: ordersData,
                 backgroundColor: BLUE,
                 borderColor: BLUE_B,
-                borderWidth: 2, borderRadius: 6,
+                borderWidth: 2,
+                borderRadius: 6,
             }];
         } else {
             datasets = [{
@@ -263,7 +266,8 @@
                 data: serviceData,
                 backgroundColor: RED,
                 borderColor: RED_B,
-                borderWidth: 2, borderRadius: 6,
+                borderWidth: 2,
+                borderRadius: 6,
             }];
         }
 

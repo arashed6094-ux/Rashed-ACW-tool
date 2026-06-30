@@ -231,20 +231,20 @@
             // Stacked: BLUE bottom (orders) + RED top (service)
             datasets = [
                 {
-                    label: 'Orders (Versandkosten)',
-                    data: ordersData,
-                    backgroundColor: BLUE,
-                    borderColor: BLUE_B,
+                    label: 'Service Calls (Vorlagen)',
+                    data: serviceData,
+                    backgroundColor: RED,
+                    borderColor: RED_B,
                     borderWidth: 1,
                     borderRadius: 0,
                     stack: 'combined',
                     order: 2,
                 },
                 {
-                    label: 'Service Calls (Vorlagen)',
-                    data: serviceData,
-                    backgroundColor: RED,
-                    borderColor: RED_B,
+                    label: 'Orders (Versandkosten)',
+                    data: ordersData,
+                    backgroundColor: BLUE,
+                    borderColor: BLUE_B,
                     borderWidth: 1,
                     borderRadius: 4,
                     stack: 'combined',

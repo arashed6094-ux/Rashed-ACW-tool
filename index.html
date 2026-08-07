@@ -110,6 +110,41 @@
         @media (max-width: 699px) {
             .top-tools-grid { display: block; }
         }
+
+        /* ===== EGYPT CLOCK ===== */
+        #egypt-clock-card { max-width:700px; margin: 0 auto 12px auto; }
+        .clock-display {
+            font-size: 38px; font-weight: bold; color: #1e3a7b;
+            letter-spacing: 4px; text-align: center; font-family: 'Courier New', monospace;
+        }
+        .clock-ampm { font-size: 16px; color: #c0272d; font-weight: bold; margin-left: 6px; }
+        .clock-date { font-size: 12px; color: #888; text-align: center; margin-top: 2px; }
+
+        /* ===== SHIFT BAR ===== */
+        #shift-card { max-width:700px; margin: 0 auto 12px auto; }
+        .shift-bar-wrap { background: #eee; border-radius: 20px; height: 22px; overflow: hidden; margin: 10px 0 6px 0; }
+        .shift-bar-fill {
+            height: 100%; border-radius: 20px; transition: width 1s linear;
+            background: linear-gradient(90deg, #1e3a7b, #c0272d);
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+            min-width: 30px;
+        }
+        .shift-bar-pct { font-size: 11px; color: white; font-weight: bold; }
+        .shift-info { display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+
+        /* ===== TOOLS NAV ===== */
+        #tools-nav { max-width:700px; margin: 0 auto 12px auto; }
+
+        /* ===== POPUP OVERLAY ===== */
+        #shift-done-popup {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;
+        }
+        .popup-box {
+            background: white; border-radius: 16px; padding: 30px; text-align: center;
+            max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: popIn 0.4s ease;
+        }
+        @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -163,63 +198,101 @@
             </button>
         </div>
     </div>
-    <!-- ===== DASHBOARD BUTTON ===== -->
-    <div style="max-width:700px; margin: 0 auto 20px auto; text-align:center;">
-        <button onclick="window.open('dashboard.html','_blank')" style="
-            padding:10px 28px; background:#1e3a7b; color:white; border:none;
-            border-radius:25px; font-size:14px; font-weight:bold; cursor:pointer;
-            box-shadow:0 3px 8px rgba(30,58,123,0.3); transition:background 0.2s;
-        " onmouseover="this.style.background='#c0272d'" onmouseout="this.style.background='#1e3a7b'">
-            📈 Team Performance Dashboard
-        </button>
-    </div>
-    <div class="top-tools-grid">
-    <!-- ===== CARD 1: AHT Tool ===== -->
-    <div class="card">
-        <h3>Rashed AHT tool</h3>
-        <label style="display:block; text-align:right; font-size:13px; color:#666; margin-bottom:2px; font-weight:bold;">Average Talk Time (MM:SS):</label>
-        <input type="text" id="talk-time" placeholder="00:00" maxlength="5"
-            style="text-align:center; letter-spacing:2px;"
-            oninput="formatTalkTime(this)">
-        <label style="display:block; text-align:right; font-size:13px; color:#666; margin-top:8px; margin-bottom:2px; font-weight:bold;">ACW Timestamps:</label>
-        <input type="text" id="t1" placeholder="توقيت 1 (HHMMSS)" maxlength="8">
-        <input type="text" id="t2" placeholder="توقيت 2 (HHMMSS)" maxlength="8">
-        <input type="text" id="t3" placeholder="توقيت 3 (HHMMSS)" maxlength="8">
-        <input type="text" id="t4" placeholder="توقيت 4 (HHMMSS)" maxlength="8">
-        <input type="number" id="calls" placeholder="عدد المكالمات">
-        <div style="display:flex; gap:8px; margin-top:4px;">
-            <button class="main-btn" onclick="calculateACW()" style="flex:1; font-size:14px;">احسب ACW</button>
-            <button class="main-btn" onclick="calculateAHT()" style="flex:1; background:#c0272d; font-size:14px;">احسب AHT</button>
+    <!-- ===== EGYPT CLOCK + SHIFT ===== -->
+    <div class="card" id="egypt-clock-card">
+        <div class="clock-display">
+            <span id="clock-time">--:--:--</span>
+            <span class="clock-ampm" id="clock-ampm">--</span>
         </div>
-        <div id="result"></div>
-        <div id="result-aht" style="margin-top:20px; text-align:right; background:#e9ecef; padding:10px; border-radius:5px; display:none;"></div>
+        <div class="clock-date" id="clock-date">--</div>
+
+        <div style="margin-top:14px; border-top:1px solid #eee; padding-top:12px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+                <span style="font-size:13px; color:#555; font-weight:bold;">⏱️ Shift Start:</span>
+                <input type="time" id="shift-start-input"
+                    style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+                <button onclick="startShift()" style="padding:6px 16px; background:#1e3a7b; color:white; border:none; border-radius:16px; font-size:13px; font-weight:bold; cursor:pointer;">✅ Confirm</button>
+                <button onclick="clearShift()" style="padding:6px 12px; background:white; color:#888; border:2px solid #ccc; border-radius:16px; font-size:12px; cursor:pointer;">✕ Clear</button>
+            </div>
+
+            <div id="shift-bar-section" style="display:none; margin-top:10px;">
+                <div class="shift-bar-wrap">
+                    <div class="shift-bar-fill" id="shift-bar-fill" style="width:0%;">
+                        <span class="shift-bar-pct" id="shift-bar-pct">0%</span>
+                    </div>
+                </div>
+                <div class="shift-info">
+                    <span id="shift-elapsed">Elapsed: 0h 0m</span>
+                    <span id="shift-remaining">Remaining: 9h 0m</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-    <!-- ===== CARD 2: Erreichbarkeit ===== -->
-    <div class="card">
-        <h3>Erreichbarkeit-Rechner</h3>
-        <label for="total-calls">Gesamtanzahl der Anrufe (إجمالي المكالمات):</label>
-        <input type="number" id="total-calls" placeholder="z.B. 120" min="0">
-        <label for="dropped-calls">Verlorene Anrufe / Dropped Calls:</label>
-        <input type="number" id="dropped-calls" placeholder="z.B. 8" min="0">
-        <button class="main-btn" onclick="calculateErreich()">Erreichbarkeit berechnen</button>
-        <div id="erreich-result"></div>
+    <!-- ===== SHIFT DONE POPUP ===== -->
+    <div id="shift-done-popup" onclick="closeShiftPopup()">
+        <div class="popup-box" onclick="event.stopPropagation()">
+            <div style="font-size:48px; margin-bottom:10px;">🎉</div>
+            <h2 style="color:#1e3a7b; margin:0 0 8px 0;">Shift Complete!</h2>
+            <p style="color:#555; font-size:14px; margin:0 0 16px 0;">عاش يا بطل! الشيفت خلص — استاحة ومبروك على يومك! 💪</p>
+            <button onclick="closeShiftPopup()" style="padding:10px 24px; background:#1e3a7b; color:white; border:none; border-radius:20px; font-size:14px; font-weight:bold; cursor:pointer;">✅ OK</button>
+        </div>
     </div>
 
-    </div><!-- end top-tools-grid -->
+    <!-- ===== TOOLS NAV (all tools as pills) ===== -->
+    <div id="tools-nav">
+        <div class="pill-row" style="margin-bottom:10px;">
+            <div class="pill" id="pill-tool-aht" onclick="toggleTool('aht')">⏱️ AHT Tool</div>
+            <div class="pill" id="pill-tool-erreich" onclick="toggleTool('erreich')">📉 Erreichbarkeit</div>
+            <div class="pill" id="pill-tool-vk" onclick="toggleTool('vk')">🚚 Versandkosten</div>
+        </div>
 
+        <!-- AHT Tool -->
+        <div class="sub-level" id="tool-aht">
+            <div class="card" style="margin:0 auto; max-width:700px;">
+                <h3>Rashed AHT tool</h3>
+                <label style="display:block; text-align:right; font-size:13px; color:#666; margin-bottom:2px; font-weight:bold;">Average Talk Time (MM:SS):</label>
+                <input type="text" id="talk-time" placeholder="00:00" maxlength="5" style="text-align:center; letter-spacing:2px;" oninput="formatTalkTime(this)">
+                <label style="display:block; text-align:right; font-size:13px; color:#666; margin-top:8px; margin-bottom:2px; font-weight:bold;">ACW Timestamps:</label>
+                <input type="text" id="t1" placeholder="توقيت 1 (HHMMSS)" maxlength="8">
+                <input type="text" id="t2" placeholder="توقيت 2 (HHMMSS)" maxlength="8">
+                <input type="text" id="t3" placeholder="توقيت 3 (HHMMSS)" maxlength="8">
+                <input type="text" id="t4" placeholder="توقيت 4 (HHMMSS)" maxlength="8">
+                <input type="number" id="calls" placeholder="عدد المكالمات">
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    <button class="main-btn" onclick="calculateACW()" style="flex:1; font-size:14px;">احسب ACW</button>
+                    <button class="main-btn" onclick="calculateAHT()" style="flex:1; background:#c0272d; font-size:14px;">احسب AHT</button>
+                </div>
+                <div id="result"></div>
+                <div id="result-aht" style="margin-top:20px; text-align:right; background:#e9ecef; padding:10px; border-radius:5px; display:none;"></div>
+            </div>
+        </div>
 
+        <!-- Erreichbarkeit -->
+        <div class="sub-level" id="tool-erreich">
+            <div class="card" style="margin:0 auto; max-width:700px;">
+                <h3>Erreichbarkeit-Rechner</h3>
+                <label for="total-calls">Gesamtanzahl der Anrufe (إجمالي المكالمات):</label>
+                <input type="number" id="total-calls" placeholder="z.B. 120" min="0">
+                <label for="dropped-calls">Verlorene Anrufe / Dropped Calls:</label>
+                <input type="number" id="dropped-calls" placeholder="z.B. 8" min="0">
+                <button class="main-btn" onclick="calculateErreich()">Erreichbarkeit berechnen</button>
+                <div id="erreich-result"></div>
+            </div>
+        </div>
 
-    <!-- ===== CARD 2: Versandkosten ===== -->
-    <div class="card">
-        <h3>Versandkosten-Rechner</h3>
-        <label for="vk_amount">Versandkosten (مصاريف الشحن الثابتة):</label>
-        <input type="text" inputmode="decimal" id="vk_amount" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
-        <label for="order_before">Warenwert / Bestellwert vor VK (ثمن الطلب):</label>
-        <input type="text" inputmode="decimal" id="order_before" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
-        <label for="order_total">Gesamtsumme inkl. VK (الإجمالي الكلي):</label>
-        <input type="text" id="order_total" placeholder="سيظهر الإجمالي تلقائياً" disabled>
+        <!-- Versandkosten -->
+        <div class="sub-level" id="tool-vk">
+            <div class="card" style="margin:0 auto; max-width:700px;">
+                <h3>Versandkosten-Rechner</h3>
+                <label for="vk_amount">Versandkosten (مصاريف الشحن الثابتة):</label>
+                <input type="text" inputmode="decimal" id="vk_amount" placeholder="مثال: 7.99" oninput="calculateVK(); saveVK();">
+                <label for="order_before">Warenwert / Bestellwert vor VK (ثمن الطلب):</label>
+                <input type="text" inputmode="decimal" id="order_before" placeholder="اكتب السعر قبل الشحن هنا" oninput="calculateVK()">
+                <label for="order_total">Gesamtsumme inkl. VK (الإجمالي الكلي):</label>
+                <input type="text" id="order_total" placeholder="سيظهر الإجمالي تلقائياً" disabled>
+            </div>
+        </div>
     </div>
 
     <!-- ===== CARD 3: Navigation ===== -->
@@ -227,6 +300,7 @@
         <div class="pill-row" id="row-main">
             <div class="pill" id="pill-knowledge" onclick="toggleMain('knowledge')">Knowledge</div>
             <div class="pill" id="pill-vorlagen" onclick="toggleMain('vorlagen')">Vorlagen</div>
+            <div class="pill" onclick="window.open('dashboard.html','_blank')" style="border-color:#c0272d; color:#c0272d;" onmouseover="this.style.background='#c0272d'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#c0272d'">📈 Dashboard</div>
         </div>
 
         <div class="sub-level" id="sub-knowledge">
@@ -1304,6 +1378,129 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         loadNotes();
         setInterval(loadNotes, 30000);
 
+
+
+        /* ===== EGYPT CLOCK (UTC+2 always, Egypt standard time) ===== */
+        function updateClock() {
+            const now = new Date();
+            // Egypt is UTC+2 (Cairo)
+            const egypt = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
+            let h = egypt.getHours();
+            const m = egypt.getMinutes();
+            const s = egypt.getSeconds();
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            document.getElementById('clock-time').textContent =
+                String(h).padStart(2,'0') + ':' +
+                String(m).padStart(2,'0') + ':' +
+                String(s).padStart(2,'0');
+            document.getElementById('clock-ampm').textContent = ampm;
+            document.getElementById('clock-date').textContent =
+                egypt.toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric', timeZone:'Africa/Cairo' });
+
+            updateShiftBar(egypt);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        /* ===== SHIFT TRACKER ===== */
+        const SHIFT_DURATION = 9 * 60 * 60 * 1000; // 9 hours in ms
+        let shiftStartMs = null;
+        let shiftAlertFired = false;
+
+        function startShift() {
+            const val = document.getElementById('shift-start-input').value;
+            if (!val) { alert('Please enter shift start time'); return; }
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
+            const [hh, mm] = val.split(':').map(Number);
+            const startEgypt = new Date(now);
+            startEgypt.setHours(hh, mm, 0, 0);
+            shiftStartMs = startEgypt.getTime();
+            shiftAlertFired = false;
+            localStorage.setItem('shift_start', shiftStartMs);
+            document.getElementById('shift-bar-section').style.display = 'block';
+            updateShiftBar(new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })));
+        }
+
+        function clearShift() {
+            shiftStartMs = null;
+            shiftAlertFired = false;
+            localStorage.removeItem('shift_start');
+            document.getElementById('shift-bar-section').style.display = 'none';
+        }
+
+        function updateShiftBar(egyptNow) {
+            if (!shiftStartMs) return;
+            const elapsed = egyptNow.getTime() - shiftStartMs;
+            if (elapsed < 0) return;
+            const pct = Math.min((elapsed / SHIFT_DURATION) * 100, 100);
+            const elapsedH = Math.floor(elapsed / 3600000);
+            const elapsedM = Math.floor((elapsed % 3600000) / 60000);
+            const remainMs = Math.max(SHIFT_DURATION - elapsed, 0);
+            const remainH = Math.floor(remainMs / 3600000);
+            const remainM = Math.floor((remainMs % 3600000) / 60000);
+
+            document.getElementById('shift-bar-fill').style.width = pct.toFixed(1) + '%';
+            document.getElementById('shift-bar-pct').textContent = pct.toFixed(0) + '%';
+            document.getElementById('shift-elapsed').textContent = `Elapsed: ${elapsedH}h ${elapsedM}m`;
+            document.getElementById('shift-remaining').textContent = remainMs > 0 ? `Remaining: ${remainH}h ${remainM}m` : 'Shift Complete! 🎉';
+
+            if (pct >= 100 && !shiftAlertFired) {
+                shiftAlertFired = true;
+                playShiftEndSound();
+                document.getElementById('shift-done-popup').style.display = 'flex';
+            }
+        }
+
+        function playShiftEndSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [523, 659, 784, 1047].forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.35);
+                    osc.start(ctx.currentTime + i * 0.18);
+                    osc.stop(ctx.currentTime + i * 0.18 + 0.35);
+                });
+            } catch(e) {}
+        }
+
+        function closeShiftPopup() {
+            document.getElementById('shift-done-popup').style.display = 'none';
+        }
+
+        // Restore shift from localStorage on page load
+        (function restoreShift() {
+            const saved = localStorage.getItem('shift_start');
+            if (saved) {
+                shiftStartMs = parseInt(saved);
+                document.getElementById('shift-bar-section').style.display = 'block';
+                // Restore time input display
+                const d = new Date(shiftStartMs);
+                const hh = String(d.getHours()).padStart(2,'0');
+                const mm = String(d.getMinutes()).padStart(2,'0');
+                document.getElementById('shift-start-input').value = hh + ':' + mm;
+            }
+        })();
+
+        /* ===== TOOLS NAV ===== */
+        function toggleTool(name) {
+            const el = document.getElementById('tool-' + name);
+            const pill = document.getElementById('pill-tool-' + name);
+            const isOpen = el.classList.contains('visible');
+            ['aht','erreich','vk'].forEach(n => {
+                document.getElementById('tool-' + n).classList.remove('visible');
+                document.getElementById('pill-tool-' + n).classList.remove('active');
+            });
+            if (!isOpen) {
+                el.classList.add('visible');
+                pill.classList.add('active');
+            }
+        }
 
         /* ===== RESET ===== */
         function resetVorlage(btn) {

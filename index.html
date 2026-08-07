@@ -173,7 +173,7 @@
         <div class="clock-date" id="clock-date">--</div>
 
         <div style="margin-top:14px; border-top:1px solid #eee; padding-top:12px;">
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; direction:ltr;">
                 <span style="font-size:13px; color:#555; font-weight:bold;">⏱️ Shift Start:</span>
                 <input type="time" id="shift-start-input"
                     style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold;">
@@ -1414,34 +1414,27 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             const val = document.getElementById('shift-start-input').value;
             if (!val) { alert('Please enter shift start time'); return; }
             const [hh, mm] = val.split(':').map(Number);
-            // Build shift start as Egypt time today
             const egyptNow = getEgyptNow();
+            // Save as absolute timestamp (ms since epoch) for accuracy
             const shiftStart = new Date(egyptNow);
             shiftStart.setHours(hh, mm, 0, 0);
-            // Store as offset from Egypt midnight in minutes
-            const minutesSinceMidnight = hh * 60 + mm;
-            localStorage.setItem('shift_start_hhmm', minutesSinceMidnight);
-            localStorage.setItem('shift_start_date', egyptNow.toDateString());
+            localStorage.setItem('shift_start_ts', shiftStart.getTime().toString());
+            localStorage.setItem('shift_start_display', val);
             shiftAlertFired = false;
             document.getElementById('shift-bar-section').style.display = 'block';
             updateShiftBar(egyptNow);
         }
 
         function getShiftStartEgypt() {
-            const saved = localStorage.getItem('shift_start_hhmm');
-            if (saved === null) return null;
-            const egyptNow = getEgyptNow();
-            const start = new Date(egyptNow);
-            const hh = Math.floor(parseInt(saved) / 60);
-            const mm = parseInt(saved) % 60;
-            start.setHours(hh, mm, 0, 0);
-            return start;
+            const saved = localStorage.getItem('shift_start_ts');
+            if (!saved) return null;
+            return new Date(parseInt(saved));
         }
 
         function clearShift() {
             shiftAlertFired = false;
-            localStorage.removeItem('shift_start_hhmm');
-            localStorage.removeItem('shift_start_date');
+            localStorage.removeItem('shift_start_ts');
+            localStorage.removeItem('shift_start_display');
             document.getElementById('shift-bar-section').style.display = 'none';
             document.getElementById('shift-start-input').value = '';
         }
@@ -1449,25 +1442,29 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         function updateShiftBar(egyptNow) {
             const shiftStart = getShiftStartEgypt();
             if (!shiftStart) return;
-            const savedDate = localStorage.getItem('shift_start_date');
-            if (!savedDate) return;
             const elapsed = egyptNow.getTime() - shiftStart.getTime();
             if (elapsed < 0) {
+                document.getElementById('shift-bar-pct').textContent = '0.00%';
                 document.getElementById('shift-elapsed').textContent = 'Shift not started yet';
-                document.getElementById('shift-remaining').textContent = 'Remaining: 9h 0m';
+                document.getElementById('shift-remaining').textContent = 'Remaining: 9h 0m 0s';
                 return;
             }
             const pct = Math.min((elapsed / SHIFT_DURATION) * 100, 100);
             const elapsedH = Math.floor(elapsed / 3600000);
             const elapsedM = Math.floor((elapsed % 3600000) / 60000);
+            const elapsedS = Math.floor((elapsed % 60000) / 1000);
             const remainMs = Math.max(SHIFT_DURATION - elapsed, 0);
             const remainH = Math.floor(remainMs / 3600000);
             const remainM = Math.floor((remainMs % 3600000) / 60000);
+            const remainS = Math.floor((remainMs % 60000) / 1000);
 
-            document.getElementById('shift-bar-fill').style.width = pct.toFixed(1) + '%';
-            document.getElementById('shift-bar-pct').textContent = pct.toFixed(0) + '%';
-            document.getElementById('shift-elapsed').textContent = `Elapsed: ${elapsedH}h ${elapsedM}m`;
-            document.getElementById('shift-remaining').textContent = remainMs > 0 ? `Remaining: ${remainH}h ${remainM}m` : 'Shift Complete! 🎉';
+            document.getElementById('shift-bar-fill').style.width = pct.toFixed(2) + '%';
+            document.getElementById('shift-bar-pct').textContent = pct.toFixed(2) + '%';
+            document.getElementById('shift-elapsed').textContent =
+                `Elapsed: ${elapsedH}h ${elapsedM}m ${elapsedS}s`;
+            document.getElementById('shift-remaining').textContent = remainMs > 0
+                ? `Remaining: ${remainH}h ${remainM}m ${remainS}s`
+                : 'Shift Complete! 🎉';
 
             if (pct >= 100 && !shiftAlertFired) {
                 shiftAlertFired = true;
@@ -1499,12 +1496,10 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
         // Restore shift from localStorage on page load
         (function restoreShift() {
-            const saved = localStorage.getItem('shift_start_hhmm');
-            if (saved !== null) {
-                const hh = Math.floor(parseInt(saved) / 60);
-                const mm = parseInt(saved) % 60;
-                document.getElementById('shift-start-input').value =
-                    String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+            const savedDisplay = localStorage.getItem('shift_start_display');
+            const savedTs = localStorage.getItem('shift_start_ts');
+            if (savedTs && savedDisplay) {
+                document.getElementById('shift-start-input').value = savedDisplay;
                 document.getElementById('shift-bar-section').style.display = 'block';
             }
         })();

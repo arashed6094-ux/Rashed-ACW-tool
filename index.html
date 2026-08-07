@@ -122,7 +122,7 @@
 
         /* ===== SHIFT BAR ===== */
         #shift-card { max-width:700px; margin: 0 auto 12px auto; }
-        .shift-bar-wrap { background: #eee; border-radius: 20px; height: 22px; overflow: hidden; margin: 10px 0 6px 0; }
+        .shift-bar-wrap { background: #eee; border-radius: 20px; height: 22px; overflow: hidden; margin: 10px 0 6px 0; direction: ltr; }
         .shift-bar-fill {
             height: 100%; border-radius: 20px; transition: width 1s linear;
             background: linear-gradient(90deg, #1e3a7b, #c0272d);
@@ -175,8 +175,22 @@
         <div style="margin-top:14px; border-top:1px solid #eee; padding-top:12px;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; direction:ltr;">
                 <span style="font-size:13px; color:#555; font-weight:bold;">⏱️ Shift Start:</span>
-                <input type="time" id="shift-start-input"
-                    style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold;">
+                <select id="shift-hour" style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold; background:white; cursor:pointer;">
+                    <option value="">HH</option>
+                    <option value="6">06</option><option value="7">07</option>
+                    <option value="8">08</option><option value="9">09</option>
+                    <option value="10">10</option><option value="11">11</option>
+                    <option value="12">12</option><option value="13">13</option>
+                    <option value="14">14</option><option value="15">15</option>
+                    <option value="16">16</option><option value="17">17</option>
+                    <option value="18">18</option><option value="19">19</option>
+                    <option value="20">20</option><option value="21">21</option>
+                </select>
+                <select id="shift-minute" style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold; background:white; cursor:pointer;">
+                    <option value="">MM</option>
+                    <option value="0">:00</option>
+                    <option value="30">:30</option>
+                </select>
                 <button onclick="startShift()" style="padding:6px 16px; background:#1e3a7b; color:white; border:none; border-radius:16px; font-size:13px; font-weight:bold; cursor:pointer;">✅ Confirm</button>
                 <button onclick="clearShift()" style="padding:6px 12px; background:white; color:#888; border:2px solid #ccc; border-radius:16px; font-size:12px; cursor:pointer;">✕ Clear</button>
             </div>
@@ -1399,8 +1413,9 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
             updateShiftBar(egypt); // egypt is already Egypt time
         }
-        setInterval(updateClock, 1000);
+        // Start clock - restoreShift runs after DOM ready
         updateClock();
+        setInterval(updateClock, 1000);
 
         /* ===== SHIFT TRACKER ===== */
         const SHIFT_DURATION = 9 * 60 * 60 * 1000; // 9 hours in ms
@@ -1411,15 +1426,16 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         }
 
         function startShift() {
-            const val = document.getElementById('shift-start-input').value;
-            if (!val) { alert('Please enter shift start time'); return; }
-            const [hh, mm] = val.split(':').map(Number);
+            const hh = document.getElementById('shift-hour').value;
+            const mm = document.getElementById('shift-minute').value;
+            if (hh === '' || mm === '') { alert('Please select shift start hour and minutes'); return; }
             const egyptNow = getEgyptNow();
-            // Save as absolute timestamp (ms since epoch) for accuracy
             const shiftStart = new Date(egyptNow);
-            shiftStart.setHours(hh, mm, 0, 0);
-            localStorage.setItem('shift_start_ts', shiftStart.getTime().toString());
-            localStorage.setItem('shift_start_display', val);
+            shiftStart.setHours(parseInt(hh), parseInt(mm), 0, 0);
+            const ts = shiftStart.getTime();
+            localStorage.setItem('shift_start_ts', ts.toString());
+            localStorage.setItem('shift_start_hh', hh);
+            localStorage.setItem('shift_start_mm', mm);
             shiftAlertFired = false;
             document.getElementById('shift-bar-section').style.display = 'block';
             updateShiftBar(egyptNow);
@@ -1434,9 +1450,11 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
         function clearShift() {
             shiftAlertFired = false;
             localStorage.removeItem('shift_start_ts');
-            localStorage.removeItem('shift_start_display');
+            localStorage.removeItem('shift_start_hh');
+            localStorage.removeItem('shift_start_mm');
             document.getElementById('shift-bar-section').style.display = 'none';
-            document.getElementById('shift-start-input').value = '';
+            document.getElementById('shift-hour').value = '';
+            document.getElementById('shift-minute').value = '';
         }
 
         function updateShiftBar(egyptNow) {
@@ -1496,11 +1514,15 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
         // Restore shift from localStorage on page load
         (function restoreShift() {
-            const savedDisplay = localStorage.getItem('shift_start_display');
             const savedTs = localStorage.getItem('shift_start_ts');
-            if (savedTs && savedDisplay) {
-                document.getElementById('shift-start-input').value = savedDisplay;
+            const savedHh = localStorage.getItem('shift_start_hh');
+            const savedMm = localStorage.getItem('shift_start_mm');
+            if (savedTs && savedHh !== null && savedMm !== null) {
+                document.getElementById('shift-hour').value = savedHh;
+                document.getElementById('shift-minute').value = savedMm;
                 document.getElementById('shift-bar-section').style.display = 'block';
+                // Force immediate update
+                updateShiftBar(getEgyptNow());
             }
         })();
 

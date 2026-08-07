@@ -177,14 +177,10 @@
                 <span style="font-size:13px; color:#555; font-weight:bold;">⏱️ Shift Start:</span>
                 <select id="shift-hour" style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold; background:white; cursor:pointer;">
                     <option value="">HH</option>
-                    <option value="6">06</option><option value="7">07</option>
                     <option value="8">08</option><option value="9">09</option>
                     <option value="10">10</option><option value="11">11</option>
                     <option value="12">12</option><option value="13">13</option>
-                    <option value="14">14</option><option value="15">15</option>
-                    <option value="16">16</option><option value="17">17</option>
-                    <option value="18">18</option><option value="19">19</option>
-                    <option value="20">20</option><option value="21">21</option>
+                    <option value="14">14</option>
                 </select>
                 <select id="shift-minute" style="padding:6px 10px; border:2px solid #1e3a7b; border-radius:16px; font-size:13px; color:#1e3a7b; font-weight:bold; background:white; cursor:pointer;">
                     <option value="">MM</option>
@@ -1414,7 +1410,6 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             updateShiftBar(egypt); // egypt is already Egypt time
         }
         // Start clock - restoreShift runs after DOM ready
-        updateClock();
         setInterval(updateClock, 1000);
 
         /* ===== SHIFT TRACKER ===== */
@@ -1521,10 +1516,12 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                 document.getElementById('shift-hour').value = savedHh;
                 document.getElementById('shift-minute').value = savedMm;
                 document.getElementById('shift-bar-section').style.display = 'block';
-                // Force immediate update
-                updateShiftBar(getEgyptNow());
             }
         })();
+
+        // Start clock AFTER all functions defined
+        updateClock();
+        setInterval(updateClock, 1000);
 
         /* ===== TOOLS NAV ===== */
         function toggleTool(name) {

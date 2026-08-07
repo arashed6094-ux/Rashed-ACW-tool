@@ -164,40 +164,6 @@
         </style>
     </div>
 
-
-    <!-- ===== USERNAME CARD ===== -->
-    <div class="card" style="max-width:700px; margin-bottom:12px; padding:14px 20px;">
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <span style="font-size:13px; color:#888;">👤 Posting as:</span>
-            <span id="current-username" style="font-size:14px; font-weight:bold; color:#1e3a7b; background:#eaf2ff; padding:5px 14px; border-radius:16px;">—</span>
-            <button onclick="changeUsername()" style="font-size:12px; color:#c0272d; background:none; border:none; cursor:pointer; font-weight:bold; text-decoration:underline;">✏️ Change</button>
-        </div>
-    </div>
-
-    <!-- ===== NOTES CARD ===== -->
-    <div class="card" id="notes-card" style="max-width:700px; margin-bottom:20px;">
-        <h3 style="margin-bottom:4px; font-size:16px; color:#1e3a7b;">📌 Team Notes</h3>
-        <p style="font-size:11px; color:#888; margin:0 0 10px 0; direction:ltr; text-align:left;">
-            ⚠️ This area is for quick team messages — e.g. Citrix issues, Yuutel outages, or important updates visible to all agents.
-        </p>
-
-        <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:320px; overflow-y:auto;">
-            <div style="text-align:center; color:#888; font-size:13px; padding:10px;">Loading notes...</div>
-        </div>
-        <div style="display:flex; gap:8px;">
-            <textarea id="note-input" placeholder="Write a note for the team..." maxlength="500" rows="1"
-                style="flex:1; padding:9px 12px; border:2px solid #ccc; border-radius:16px; font-size:13px;
-                box-sizing:border-box; outline:none; resize:none; overflow:hidden; font-family:Arial,sans-serif; line-height:1.4;"
-                onfocus="this.style.borderColor='#1e3a7b'" onblur="this.style.borderColor='#ccc'"
-                oninput="autoResizeNote(this); detectNoteDir(this);"
-                onkeydown="if(event.key==='Enter' && !event.shiftKey && !isMobile()){event.preventDefault(); addNote();}"></textarea>
-            <button onclick="addNote()" style="
-                padding:9px 18px; background:#1e3a7b; color:white; border:none;
-                border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap; align-self:flex-end;">
-                Send ✉️
-            </button>
-        </div>
-    </div>
     <!-- ===== EGYPT CLOCK + SHIFT ===== -->
     <div class="card" id="egypt-clock-card">
         <div class="clock-display">
@@ -239,6 +205,39 @@
         </div>
     </div>
 
+    <!-- ===== USERNAME CARD ===== -->
+    <div class="card" style="max-width:700px; margin-bottom:12px; padding:14px 20px;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:13px; color:#888;">👤 Posting as:</span>
+            <span id="current-username" style="font-size:14px; font-weight:bold; color:#1e3a7b; background:#eaf2ff; padding:5px 14px; border-radius:16px;">—</span>
+            <button onclick="changeUsername()" style="font-size:12px; color:#c0272d; background:none; border:none; cursor:pointer; font-weight:bold; text-decoration:underline;">✏️ Change</button>
+        </div>
+    </div>
+
+    <!-- ===== NOTES CARD ===== -->
+    <div class="card" id="notes-card" style="max-width:700px; margin-bottom:20px;">
+        <h3 style="margin-bottom:4px; font-size:16px; color:#1e3a7b;">📌 Team Notes</h3>
+        <p style="font-size:11px; color:#888; margin:0 0 10px 0; direction:ltr; text-align:left;">
+            ⚠️ This area is for quick team messages — e.g. Citrix issues, Yuutel outages, or important updates visible to all agents.
+        </p>
+
+        <div id="notes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; max-height:320px; overflow-y:auto;">
+            <div style="text-align:center; color:#888; font-size:13px; padding:10px;">Loading notes...</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <textarea id="note-input" placeholder="Write a note for the team..." maxlength="500" rows="1"
+                style="flex:1; padding:9px 12px; border:2px solid #ccc; border-radius:16px; font-size:13px;
+                box-sizing:border-box; outline:none; resize:none; overflow:hidden; font-family:Arial,sans-serif; line-height:1.4;"
+                onfocus="this.style.borderColor='#1e3a7b'" onblur="this.style.borderColor='#ccc'"
+                oninput="autoResizeNote(this); detectNoteDir(this);"
+                onkeydown="if(event.key==='Enter' && !event.shiftKey && !isMobile()){event.preventDefault(); addNote();}"></textarea>
+            <button onclick="addNote()" style="
+                padding:9px 18px; background:#1e3a7b; color:white; border:none;
+                border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap; align-self:flex-end;">
+                Send ✉️
+            </button>
+        </div>
+    </div>
     <!-- ===== TOOLS NAV (all tools as pills) ===== -->
     <div id="tools-nav">
         <div class="pill-row" style="margin-bottom:10px;">
@@ -1398,41 +1397,66 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             document.getElementById('clock-date').textContent =
                 egypt.toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric', timeZone:'Africa/Cairo' });
 
-            updateShiftBar(egypt);
+            updateShiftBar(egypt); // egypt is already Egypt time
         }
         setInterval(updateClock, 1000);
         updateClock();
 
         /* ===== SHIFT TRACKER ===== */
         const SHIFT_DURATION = 9 * 60 * 60 * 1000; // 9 hours in ms
-        let shiftStartMs = null;
         let shiftAlertFired = false;
+
+        function getEgyptNow() {
+            return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
+        }
 
         function startShift() {
             const val = document.getElementById('shift-start-input').value;
             if (!val) { alert('Please enter shift start time'); return; }
-            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
             const [hh, mm] = val.split(':').map(Number);
-            const startEgypt = new Date(now);
-            startEgypt.setHours(hh, mm, 0, 0);
-            shiftStartMs = startEgypt.getTime();
+            // Build shift start as Egypt time today
+            const egyptNow = getEgyptNow();
+            const shiftStart = new Date(egyptNow);
+            shiftStart.setHours(hh, mm, 0, 0);
+            // Store as offset from Egypt midnight in minutes
+            const minutesSinceMidnight = hh * 60 + mm;
+            localStorage.setItem('shift_start_hhmm', minutesSinceMidnight);
+            localStorage.setItem('shift_start_date', egyptNow.toDateString());
             shiftAlertFired = false;
-            localStorage.setItem('shift_start', shiftStartMs);
             document.getElementById('shift-bar-section').style.display = 'block';
-            updateShiftBar(new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' })));
+            updateShiftBar(egyptNow);
+        }
+
+        function getShiftStartEgypt() {
+            const saved = localStorage.getItem('shift_start_hhmm');
+            if (saved === null) return null;
+            const egyptNow = getEgyptNow();
+            const start = new Date(egyptNow);
+            const hh = Math.floor(parseInt(saved) / 60);
+            const mm = parseInt(saved) % 60;
+            start.setHours(hh, mm, 0, 0);
+            return start;
         }
 
         function clearShift() {
-            shiftStartMs = null;
             shiftAlertFired = false;
-            localStorage.removeItem('shift_start');
+            localStorage.removeItem('shift_start_hhmm');
+            localStorage.removeItem('shift_start_date');
             document.getElementById('shift-bar-section').style.display = 'none';
+            document.getElementById('shift-start-input').value = '';
         }
 
         function updateShiftBar(egyptNow) {
-            if (!shiftStartMs) return;
-            const elapsed = egyptNow.getTime() - shiftStartMs;
-            if (elapsed < 0) return;
+            const shiftStart = getShiftStartEgypt();
+            if (!shiftStart) return;
+            const savedDate = localStorage.getItem('shift_start_date');
+            if (!savedDate) return;
+            const elapsed = egyptNow.getTime() - shiftStart.getTime();
+            if (elapsed < 0) {
+                document.getElementById('shift-elapsed').textContent = 'Shift not started yet';
+                document.getElementById('shift-remaining').textContent = 'Remaining: 9h 0m';
+                return;
+            }
             const pct = Math.min((elapsed / SHIFT_DURATION) * 100, 100);
             const elapsedH = Math.floor(elapsed / 3600000);
             const elapsedM = Math.floor((elapsed % 3600000) / 60000);
@@ -1475,15 +1499,13 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
         // Restore shift from localStorage on page load
         (function restoreShift() {
-            const saved = localStorage.getItem('shift_start');
-            if (saved) {
-                shiftStartMs = parseInt(saved);
+            const saved = localStorage.getItem('shift_start_hhmm');
+            if (saved !== null) {
+                const hh = Math.floor(parseInt(saved) / 60);
+                const mm = parseInt(saved) % 60;
+                document.getElementById('shift-start-input').value =
+                    String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
                 document.getElementById('shift-bar-section').style.display = 'block';
-                // Restore time input display
-                const d = new Date(shiftStartMs);
-                const hh = String(d.getHours()).padStart(2,'0');
-                const mm = String(d.getMinutes()).padStart(2,'0');
-                document.getElementById('shift-start-input').value = hh + ':' + mm;
             }
         })();
 

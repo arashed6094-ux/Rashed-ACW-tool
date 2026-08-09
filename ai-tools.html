@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant – Rashed Assist</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 15px; color: #333; }
+
+        .back-btn { display:inline-flex; align-items:center; gap:6px; margin-bottom:16px; padding:8px 18px;
+            background:#1e3a7b; color:white; border:none; border-radius:20px; font-size:13px;
+            font-weight:bold; cursor:pointer; text-decoration:none; }
+
+        h1 { text-align:center; background:linear-gradient(135deg,#1e3a7b,#c0272d);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            font-size:22px; margin:0 0 4px 0; }
+        .subtitle { text-align:center; color:#888; font-size:12px; margin:0 0 20px 0; }
+
+        .card { background:white; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            padding:20px; margin:0 auto 16px auto; max-width:700px; }
+
+        /* Pills */
+        .pill-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+        .pill { padding:10px 22px; border-radius:25px; border:2px solid #1e3a7b;
+            background:white; color:#1e3a7b; font-size:14px; font-weight:bold;
+            cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .pill:hover, .pill.active { background:#1e3a7b; color:white; }
+        .pill.red { border-color:#c0272d; color:#c0272d; }
+        .pill.red:hover, .pill.red.active { background:#c0272d; color:white; }
+
+        .sub-section { display:none; }
+        .sub-section.visible { display:block; }
+
+        /* Form elements */
+        label { display:block; font-size:13px; font-weight:bold; color:#555; margin:10px 0 4px 0; }
+        input[type=text], input[type=time], input[type=date], select, textarea {
+            width:100%; padding:10px 14px; border:2px solid #ddd; border-radius:10px;
+            font-size:14px; font-family:Arial,sans-serif; outline:none; transition:border 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color:#1e3a7b; }
+        textarea { resize:vertical; min-height:80px; line-height:1.6; }
+
+        .btn { padding:10px 20px; border:none; border-radius:20px; font-size:14px;
+            font-weight:bold; cursor:pointer; transition:all 0.2s; }
+        .btn-blue { background:#1e3a7b; color:white; width:100%; margin-top:12px; }
+        .btn-blue:hover { background:#162d63; }
+        .btn-red { background:#c0272d; color:white; }
+        .btn-red:hover { background:#a01f24; }
+        .btn-grey { background:#eee; color:#555; }
+
+        /* Result table */
+        .result-area { display:none; margin-top:16px; }
+        .result-area.visible { display:block; }
+        .email-table { width:100%; border-collapse:collapse; margin-bottom:12px; }
+        .email-table th { background:#1e3a7b; color:white; padding:10px 14px; text-align:left; font-size:13px; }
+        .email-table td { padding:10px 14px; border:1px solid #ddd; font-size:13px; vertical-align:top; }
+        .email-table tr:nth-child(even) td { background:#f9f9f9; }
+
+        .copy-html-btn { padding:8px 18px; background:#1e3a7b; color:white; border:none;
+            border-radius:16px; font-size:13px; font-weight:bold; cursor:pointer; margin-right:8px; }
+        .save-ai-btn { padding:8px 14px; background:#888; color:white; border:none;
+            border-radius:16px; font-size:12px; cursor:pointer; }
+
+        /* AI result */
+        .ai-result { background:#f5f6fb; border:2px solid #1e3a7b; border-radius:10px;
+            padding:14px; font-size:14px; line-height:1.7; white-space:pre-wrap;
+            direction:ltr; text-align:left; min-height:60px; }
+        .loading { color:#888; font-style:italic; }
+
+        /* Other email textarea */
+        #other-result-area { direction:ltr; }
+
+        .section-title { font-size:16px; font-weight:bold; color:#1e3a7b; margin:0 0 12px 0; display:flex; align-items:center; gap:8px; }
+
+        .pill-type { padding:8px 16px; border-radius:20px; border:2px solid #555;
+            background:white; color:#555; font-size:13px; font-weight:bold;
+            cursor:pointer; transition:all 0.2s; }
+        .pill-type:hover, .pill-type.active { background:#555; color:white; }
+
+        .call-type-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+
+        @media (max-width:500px) {
+            .pill { font-size:13px; padding:8px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="back-btn" onclick="window.location.href='https://arashed6094-ux.github.io/Rashed-ACW-tool/'">← Back</button>
+
+<h1>🤖 AI Assistant</h1>
+<p class="subtitle">Powered by Gemini AI · Personal Shop Call Center</p>
+
+<!-- Main nav -->
+<div class="pill-row">
+    <div class="pill active" id="btn-email" onclick="showMain('email')">✉️ Email Assistant</div>
+    <div class="pill" id="btn-call" onclick="showMain('call')">📞 Call Assistant</div>
+</div>
+
+<!-- ===== EMAIL SECTION ===== -->
+<div class="sub-section visible" id="sec-email">
+    <div class="card">
+        <div class="section-title">✉️ Email Assistant</div>
+        <div class="pill-row">
+            <div class="pill-type active" id="etype-swap" onclick="showEmailType('swap')">🔄 Swap Request</div>
+            <div class="pill-type" id="etype-issue" onclick="showEmailType('issue')">⚠️ System Issue</div>
+            <div class="pill-type" id="etype-callval" onclick="showEmailType('callval')">📞 Call Validation</div>
+            <div class="pill-type" id="etype-other" onclick="showEmailType('other')">📝 Other</div>
+        </div>
+    </div>
+
+    <!-- SWAP REQUEST -->
+    <div class="card sub-section visible" id="form-swap">
+        <div class="section-title">🔄 Swap Request</div>
+
+        <label>LOB:</label>
+        <select id="swap-lob">
+            <option value="German">German</option>
+            <option value="French">French</option>
+        </select>
+
+        <label>Your CCMS:</label>
+        <input type="text" id="swap-my-ccms" placeholder="e.g. 5727618">
+
+        <label>Colleague's CCMS:</label>
+        <input type="text" id="swap-col-ccms" placeholder="e.g. 5890759">
+
+        <label>Your Name:</label>
+        <input type="text" id="swap-my-name" placeholder="Your full name">
+
+        <label>Colleague's Name:</label>
+        <input type="text" id="swap-col-name" placeholder="Colleague's full name">
+
+        <label>Your Shift:</label>
+        <input type="text" id="swap-my-shift" placeholder="e.g. 8:30 AM">
+
+        <label>Colleague's Shift:</label>
+        <input type="text" id="swap-col-shift" placeholder="e.g. 2 PM">
+
+        <label>Swap Date:</label>
+        <input type="date" id="swap-date">
+
+        <button class="btn btn-blue" onclick="generateSwap()">📧 Generate Email</button>
+
+        <div class="result-area" id="swap-result">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                <b style="color:#1e3a7b;">Subject: Swap Request</b>
+                <button class="copy-html-btn" onclick="copyTableHTML('swap-table-wrap')">📋 Copy for Email</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('swap-table-wrap')">💡 Save to AI Notes</button>
+            </div>
+            <div id="swap-table-wrap" style="direction:ltr;"></div>
+            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
+        </div>
+    </div>
+
+    <!-- SYSTEM ISSUE -->
+    <div class="card sub-section" id="form-issue">
+        <div class="section-title">⚠️ System Issue</div>
+
+        <label>Your CCMS:</label>
+        <input type="text" id="issue-ccms" placeholder="e.g. 5727618">
+
+        <label>Your Name:</label>
+        <input type="text" id="issue-name" placeholder="Your full name">
+
+        <label>Issue Start Time:</label>
+        <input type="time" id="issue-from">
+
+        <label>Issue End Time:</label>
+        <input type="time" id="issue-to">
+
+        <label>Issue Type (write in Arabic):</label>
+        <textarea id="issue-type-ar" placeholder="اكتب نوع المشكلة بالعربي هنا..." style="direction:rtl; text-align:right;"></textarea>
+
+        <button class="btn btn-blue" onclick="generateIssue()">🤖 Generate with AI</button>
+
+        <div class="result-area" id="issue-result">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                <b style="color:#1e3a7b;">Subject: System Issue</b>
+                <button class="copy-html-btn" onclick="copyTableHTML('issue-table-wrap')">📋 Copy for Email</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('issue-table-wrap')">💡 Save to AI Notes</button>
+            </div>
+            <div id="issue-table-wrap" style="direction:ltr;"></div>
+            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
+        </div>
+    </div>
+
+    <!-- CALL VALIDATION -->
+    <div class="card sub-section" id="form-callval">
+        <div class="section-title">📞 Call Validation</div>
+
+        <label>Customer Number / Phone Number:</label>
+        <input type="text" id="cv-phone" placeholder="e.g. 004916096452221">
+
+        <label>Date:</label>
+        <input type="date" id="cv-date">
+
+        <label>Time of Call:</label>
+        <input type="time" id="cv-time">
+
+        <label>Call Type:</label>
+        <div class="call-type-row" id="cv-type-group">
+            <div class="pill-type" onclick="selectCallTypeAI(this,'Dropped call')">Dropped call</div>
+            <div class="pill-type" onclick="selectCallTypeAI(this,'Call under 1 minute')">Call under 1 minute</div>
+            <div class="pill-type" onclick="selectCallTypeAI(this,'Call over 10 minutes')">Call over 10 minutes</div>
+        </div>
+        <input type="hidden" id="cv-type-val">
+
+        <label>Issue Description (write in Arabic):</label>
+        <textarea id="cv-issue-ar" placeholder="اكتب وصف المشكلة بالعربي هنا..." style="direction:rtl; text-align:right;"></textarea>
+
+        <button class="btn btn-blue" onclick="generateCallVal()">🤖 Generate with AI</button>
+
+        <div class="result-area" id="cv-result">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                <b style="color:#1e3a7b;">Subject: Call Validation</b>
+                <button class="copy-html-btn" onclick="copyTableHTML('cv-table-wrap')">📋 Copy for Email</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('cv-table-wrap')">💡 Save to AI Notes</button>
+            </div>
+            <div id="cv-table-wrap" style="direction:ltr;"></div>
+            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
+        </div>
+    </div>
+
+    <!-- OTHER EMAIL -->
+    <div class="card sub-section" id="form-other">
+        <div class="section-title">📝 Other Email</div>
+        <label>What do you want to say? (write in Arabic):</label>
+        <textarea id="other-content-ar" placeholder="اكتب اللي عايز تقوله بالعربي هنا..." style="direction:rtl; text-align:right; min-height:120px;"></textarea>
+        <button class="btn btn-blue" onclick="generateOther()">🤖 Generate Email with AI</button>
+        <div class="result-area" id="other-result">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                <b style="color:#1e3a7b;">Generated Email:</b>
+                <button class="copy-html-btn" onclick="copyText('other-email-output')">📋 Copy</button>
+                <button class="save-ai-btn" onclick="saveTextToAINotes('other-email-output')">💡 Save to AI Notes</button>
+            </div>
+            <div class="ai-result" id="other-email-output"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CALL SECTION ===== -->
+<div class="sub-section" id="sec-call">
+    <div class="card" style="text-align:center; padding:40px;">
+        <div style="font-size:48px; margin-bottom:12px;">📞</div>
+        <h3 style="color:#1e3a7b; margin:0 0 8px 0;">Call Assistant</h3>
+        <p style="color:#888; font-size:14px;">Coming soon — will help you during calls with AI-powered suggestions.</p>
+    </div>
+</div>
+
+<script>
+    const WORKER_URL = 'https://rashed-ai.arashed6094.workers.dev/';
+    const SB_URL = 'https://dhnxkshblavokipiafsi.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRobnhrc2hibGF2b2tpcGlhZnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzgxMjYsImV4cCI6MjA5ODIxNDEyNn0.gZ27O1-0IXAmk47YnnsfdwL8KwX2A2R1O78W1hv9XAI';
+
+    // Set today's date on call validation
+    document.getElementById('cv-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('swap-date').value = new Date().toISOString().slice(0,10);
+
+    function showMain(name) {
+        ['email','call'].forEach(n => {
+            document.getElementById('sec-'+n).classList.remove('visible');
+            document.getElementById('btn-'+n).classList.remove('active');
+        });
+        document.getElementById('sec-'+name).classList.add('visible');
+        document.getElementById('btn-'+name).classList.add('active');
+    }
+
+    function showEmailType(type) {
+        ['swap','issue','callval','other'].forEach(t => {
+            document.getElementById('form-'+t).classList.remove('visible');
+            document.getElementById('etype-'+t).classList.remove('active');
+        });
+        document.getElementById('form-'+type).classList.add('visible');
+        document.getElementById('etype-'+type).classList.add('active');
+    }
+
+    function selectCallTypeAI(el, val) {
+        document.querySelectorAll('#cv-type-group .pill-type').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('cv-type-val').value = val;
+    }
+
+    /* ===== AI CALL ===== */
+    async function callAI(prompt) {
+        const res = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        return data.result || '';
+    }
+
+    function fmtTime(t) {
+        if (!t) return '';
+        const [h,m] = t.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    function tableStyle() {
+        return 'width:100%;border-collapse:collapse;font-family:Arial,sans-serif;';
+    }
+    function thStyle() {
+        return 'background:#1e3a7b;color:white;padding:10px 14px;text-align:left;font-size:13px;border:1px solid #1e3a7b;';
+    }
+    function tdStyle() {
+        return 'padding:10px 14px;border:1px solid #ccc;font-size:13px;vertical-align:top;';
+    }
+
+    /* ===== SWAP REQUEST ===== */
+    function generateSwap() {
+        const lob = document.getElementById('swap-lob').value;
+        const myCcms = document.getElementById('swap-my-ccms').value.trim();
+        const colCcms = document.getElementById('swap-col-ccms').value.trim();
+        const myName = document.getElementById('swap-my-name').value.trim();
+        const colName = document.getElementById('swap-col-name').value.trim();
+        const myShift = document.getElementById('swap-my-shift').value.trim();
+        const colShift = document.getElementById('swap-col-shift').value.trim();
+        const dateVal = document.getElementById('swap-date').value;
+
+        if (!myCcms || !colCcms || !myName || !colName) {
+            alert('Please fill all fields.'); return;
+        }
+
+        const dateDisplay = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'numeric',year:'numeric'}) : '';
+
+        const tableHTML = `<table style="${tableStyle()}">
+            <tr>
+                <th style="${thStyle()}">LOB</th>
+                <th style="${thStyle()}">CCMS</th>
+                <th style="${thStyle()}">Agent Name</th>
+                <th style="${thStyle()}">Shift</th>
+                <th style="${thStyle()}">Date</th>
+            </tr>
+            <tr>
+                <td style="${tdStyle()}">${lob}</td>
+                <td style="${tdStyle()}">${myCcms}</td>
+                <td style="${tdStyle()}">${myName}</td>
+                <td style="${tdStyle()}">${myShift}</td>
+                <td style="${tdStyle()}" rowspan="2">${dateDisplay}</td>
+            </tr>
+            <tr>
+                <td style="${tdStyle()}">${lob}</td>
+                <td style="${tdStyle()}">${colCcms}</td>
+                <td style="${tdStyle()}">${colName}</td>
+                <td style="${tdStyle()}">${colShift}</td>
+            </tr>
+        </table>`;
+
+        document.getElementById('swap-table-wrap').innerHTML = tableHTML;
+        document.getElementById('swap-result').classList.add('visible');
+    }
+
+    /* ===== SYSTEM ISSUE ===== */
+    async function generateIssue() {
+        const ccms = document.getElementById('issue-ccms').value.trim();
+        const name = document.getElementById('issue-name').value.trim();
+        const from = document.getElementById('issue-from').value;
+        const to = document.getElementById('issue-to').value;
+        const typeAr = document.getElementById('issue-type-ar').value.trim();
+
+        if (!ccms || !name || !from || !to || !typeAr) {
+            alert('Please fill all fields.'); return;
+        }
+
+        const btn = document.querySelector('#form-issue .btn-blue');
+        btn.textContent = '⏳ Translating...'; btn.disabled = true;
+
+        try {
+            const translated = await callAI(
+                `Translate this Arabic technical issue description to professional concise English (max 5 words) suitable for a call center system report: "${typeAr}". Return only the translated phrase, nothing else.`
+            );
+
+            const tableHTML = `<table style="${tableStyle()}">
+                <tr>
+                    <th style="${thStyle()}">CCMS</th>
+                    <th style="${thStyle()}">Name</th>
+                    <th style="${thStyle()}">Issue From</th>
+                    <th style="${thStyle()}">Issue to</th>
+                    <th style="${thStyle()}">Issue Type</th>
+                </tr>
+                <tr>
+                    <td style="${tdStyle()}">${ccms}</td>
+                    <td style="${tdStyle()}">${name}</td>
+                    <td style="${tdStyle()}">${fmtTime(from)}</td>
+                    <td style="${tdStyle()}">${fmtTime(to)}</td>
+                    <td style="${tdStyle()}">${translated.trim()}</td>
+                </tr>
+            </table>`;
+
+            document.getElementById('issue-table-wrap').innerHTML = tableHTML;
+            document.getElementById('issue-result').classList.add('visible');
+        } catch(e) {
+            alert('AI error. Check your connection.');
+        }
+        btn.textContent = '🤖 Generate with AI'; btn.disabled = false;
+    }
+
+    /* ===== CALL VALIDATION ===== */
+    async function generateCallVal() {
+        const phone = document.getElementById('cv-phone').value.trim();
+        const date = document.getElementById('cv-date').value;
+        const time = document.getElementById('cv-time').value;
+        const callType = document.getElementById('cv-type-val').value;
+        const issueAr = document.getElementById('cv-issue-ar').value.trim();
+
+        if (!phone || !date || !time || !callType || !issueAr) {
+            alert('Please fill all fields and select call type.'); return;
+        }
+
+        const btn = document.querySelector('#form-callval .btn-blue');
+        btn.textContent = '⏳ Processing...'; btn.disabled = true;
+
+        try {
+            const dateDisplay = new Date(date + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'numeric',year:'numeric'});
+
+            const translated = await callAI(
+                `Translate this Arabic issue description to professional English suitable for a call center email report. Be concise and formal. Keep it to 1-2 sentences max: "${issueAr}". Return only the translation, nothing else.`
+            );
+
+            const tableHTML = `<table style="${tableStyle()}">
+                <tr>
+                    <th style="${thStyle()}">Customer number || phone number</th>
+                    <th style="${thStyle()}">Date</th>
+                    <th style="${thStyle()}">Time of the call</th>
+                    <th style="${thStyle()}">Call Type</th>
+                    <th style="${thStyle()}">Issue Description</th>
+                </tr>
+                <tr>
+                    <td style="${tdStyle()}">${phone}</td>
+                    <td style="${tdStyle()}">${dateDisplay}</td>
+                    <td style="${tdStyle()}">${fmtTime(time)}</td>
+                    <td style="${tdStyle()}">${callType}</td>
+                    <td style="${tdStyle()}">${translated.trim()}</td>
+                </tr>
+                <tr>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}">Call under 1 minute</td>
+                    <td style="${tdStyle()}"></td>
+                </tr>
+                <tr>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}"></td>
+                    <td style="${tdStyle()}">Call over 10 minutes</td>
+                    <td style="${tdStyle()}"></td>
+                </tr>
+            </table>`;
+
+            document.getElementById('cv-table-wrap').innerHTML = tableHTML;
+            document.getElementById('cv-result').classList.add('visible');
+        } catch(e) {
+            alert('AI error. Check your connection.');
+        }
+        btn.textContent = '🤖 Generate with AI'; btn.disabled = false;
+    }
+
+    /* ===== OTHER EMAIL ===== */
+    async function generateOther() {
+        const text = document.getElementById('other-content-ar').value.trim();
+        if (!text) { alert('Please write what you want to say.'); return; }
+
+        const btn = document.querySelector('#form-other .btn-blue');
+        btn.textContent = '⏳ Writing email...'; btn.disabled = true;
+
+        const output = document.getElementById('other-email-output');
+        output.textContent = 'Generating...';
+        output.classList.add('loading');
+        document.getElementById('other-result').classList.add('visible');
+
+        try {
+            const email = await callAI(
+                `You are a professional call center email writer for Personal Shop Germany. 
+Write a professional formal email in English based on this Arabic description: "${text}".
+Format: Subject line first, then blank line, then email body. 
+Keep it concise, professional, and formal. End with "Thank you for your cooperation."`
+            );
+            output.textContent = email.trim();
+            output.classList.remove('loading');
+        } catch(e) {
+            output.textContent = 'Error generating email. Please try again.';
+        }
+        btn.textContent = '🤖 Generate Email with AI'; btn.disabled = false;
+    }
+
+    /* ===== COPY FUNCTIONS ===== */
+    function copyTableHTML(containerId) {
+        const el = document.getElementById(containerId);
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand('copy');
+        sel.removeAllRanges();
+        alert('✅ Copied! Paste directly into your email client.');
+    }
+
+    function copyText(elId) {
+        const text = document.getElementById(elId).textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('✅ Copied!');
+        });
+    }
+
+    /* ===== SAVE TO AI NOTES ===== */
+    function saveResultToAINotes(containerId) {
+        const pin = localStorage.getItem('rashed_pin') || 'guest';
+        const html = document.getElementById(containerId).innerHTML;
+        const text = document.getElementById(containerId).innerText;
+        const timestamp = new Date().toLocaleString();
+        const existing = localStorage.getItem('ai_notes_' + pin) || '';
+        localStorage.setItem('ai_notes_' + pin, existing + `\n\n--- Saved ${timestamp} ---\n` + text);
+        alert('✅ Saved to AI Notes!');
+    }
+
+    function saveTextToAINotes(elId) {
+        const pin = localStorage.getItem('rashed_pin') || 'guest';
+        const text = document.getElementById(elId).textContent;
+        const timestamp = new Date().toLocaleString();
+        const existing = localStorage.getItem('ai_notes_' + pin) || '';
+        localStorage.setItem('ai_notes_' + pin, existing + `\n\n--- Saved ${timestamp} ---\n` + text);
+        alert('✅ Saved to AI Notes!');
+    }
+</script>
+</body>
+</html>

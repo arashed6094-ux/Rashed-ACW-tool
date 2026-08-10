@@ -145,8 +145,9 @@
         <div class="result-area" id="swap-result">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
                 <b style="color:#1e3a7b;">Subject: Swap Request</b>
-                <button class="copy-html-btn" onclick="copyTableHTML('swap-table-wrap')">📋 Copy for Email</button>
-                <button class="save-ai-btn" onclick="saveResultToAINotes('swap-table-wrap')">💡 Save to AI Notes</button>
+                <button class="copy-html-btn" onclick="copyTableHTML('swap-table-wrap')">📋 Copy</button>
+                <button class="copy-html-btn" onclick="openTableInNewTab('swap-table-wrap','Swap Request')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('swap-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="swap-table-wrap" style="direction:ltr;"></div>
             <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
@@ -177,8 +178,9 @@
         <div class="result-area" id="issue-result">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
                 <b style="color:#1e3a7b;">Subject: System Issue</b>
-                <button class="copy-html-btn" onclick="copyTableHTML('issue-table-wrap')">📋 Copy for Email</button>
-                <button class="save-ai-btn" onclick="saveResultToAINotes('issue-table-wrap')">💡 Save to AI Notes</button>
+                <button class="copy-html-btn" onclick="copyTableHTML('issue-table-wrap')">📋 Copy</button>
+                <button class="copy-html-btn" onclick="openTableInNewTab('issue-table-wrap','System Issue')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('issue-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="issue-table-wrap" style="direction:ltr;"></div>
             <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
@@ -214,8 +216,9 @@
         <div class="result-area" id="cv-result">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
                 <b style="color:#1e3a7b;">Subject: Call Validation</b>
-                <button class="copy-html-btn" onclick="copyTableHTML('cv-table-wrap')">📋 Copy for Email</button>
-                <button class="save-ai-btn" onclick="saveResultToAINotes('cv-table-wrap')">💡 Save to AI Notes</button>
+                <button class="copy-html-btn" onclick="copyTableHTML('cv-table-wrap')">📋 Copy</button>
+                <button class="copy-html-btn" onclick="openTableInNewTab('cv-table-wrap','Call Validation')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('cv-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="cv-table-wrap" style="direction:ltr;"></div>
             <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
@@ -491,6 +494,31 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
     /* ===== COPY FUNCTIONS ===== */
     function copyTableHTML(containerId) {
         const el = document.getElementById(containerId);
+        
+        // Method: use ClipboardItem with both HTML and plain text
+        try {
+            const htmlContent = el.innerHTML;
+            const fullHTML = `<html><body>${htmlContent}</body></html>`;
+            
+            if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({
+                    'text/html': new Blob([fullHTML], { type: 'text/html' }),
+                    'text/plain': new Blob([el.innerText], { type: 'text/plain' })
+                });
+                navigator.clipboard.write([item]).then(() => {
+                    alert('✅ Copied! Now paste it in Roundcube email body.');
+                }).catch(() => {
+                    fallbackCopy(el);
+                });
+            } else {
+                fallbackCopy(el);
+            }
+        } catch(e) {
+            fallbackCopy(el);
+        }
+    }
+
+    function fallbackCopy(el) {
         const range = document.createRange();
         range.selectNodeContents(el);
         const sel = window.getSelection();
@@ -498,7 +526,7 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
         sel.addRange(range);
         document.execCommand('copy');
         sel.removeAllRanges();
-        alert('✅ Copied! Paste directly into your email client.');
+        alert('✅ Copied! Paste directly into your email body in Roundcube.');
     }
 
     function copyText(elId) {
@@ -509,6 +537,27 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
     }
 
     /* ===== SAVE TO AI NOTES ===== */
+    function openTableInNewTab(containerId, subject) {
+        const el = document.getElementById(containerId);
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>${subject}</title>
+        <style>body{font-family:Arial,sans-serif;padding:30px;max-width:900px;margin:0 auto;}
+        h2{color:#1e3a7b;}
+        .hint{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:20px;font-size:13px;}
+        table{border-collapse:collapse;width:100%;}
+        th{background:#1e3a7b;color:white;padding:10px 14px;text-align:left;font-size:13px;border:1px solid #1e3a7b;}
+        td{padding:10px 14px;border:1px solid #ccc;font-size:13px;vertical-align:top;}
+        </style></head><body>
+        <h2>📧 ${subject}</h2>
+        <div class="hint">💡 <b>How to copy:</b> Click inside the table → Press Ctrl+A → Press Ctrl+C → Paste in Roundcube email body.</div>
+        ${el.outerHTML}
+        <p style="margin-top:16px;color:#555;font-size:13px;">Thank you for your cooperation.</p>
+        </body></html>`;
+        const blob = new Blob([html], {type:'text/html'});
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    }
+
     function saveResultToAINotes(containerId) {
         const pin = localStorage.getItem('rashed_pin') || 'guest';
         const html = document.getElementById(containerId).innerHTML;

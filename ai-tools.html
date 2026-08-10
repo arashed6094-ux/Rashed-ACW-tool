@@ -304,13 +304,19 @@
     }
 
     function tableStyle() {
-        return 'width:100%;border-collapse:collapse;font-family:Arial,sans-serif;';
+        return 'width:100%;border-collapse:collapse;font-family:Arial,sans-serif;border:2px solid #1e3a7b;';
     }
     function thStyle() {
-        return 'background:#1e3a7b;color:white;padding:10px 14px;text-align:left;font-size:13px;border:1px solid #1e3a7b;';
+        return 'background-color:#1e3a7b;color:#ffffff;padding:10px 14px;text-align:left;font-size:13px;border:1px solid #1e3a7b;font-family:Arial,sans-serif;font-weight:bold;';
     }
     function tdStyle() {
-        return 'padding:10px 14px;border:1px solid #ccc;font-size:13px;vertical-align:top;';
+        return 'padding:10px 14px;border:1px solid #cccccc;font-size:13px;vertical-align:top;font-family:Arial,sans-serif;';
+    }
+    function thAttrs() {
+        return 'bgcolor="#1e3a7b"';
+    }
+    function trEvenAttrs() {
+        return 'bgcolor="#f5f6fb"';
     }
 
     /* ===== SWAP REQUEST ===== */
@@ -330,15 +336,15 @@
 
         const dateDisplay = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'numeric',year:'numeric'}) : '';
 
-        const tableHTML = `<table style="${tableStyle()}">
-            <tr>
-                <th style="${thStyle()}">LOB</th>
-                <th style="${thStyle()}">CCMS</th>
-                <th style="${thStyle()}">Agent Name</th>
-                <th style="${thStyle()}">Shift</th>
-                <th style="${thStyle()}">Date</th>
+        const tableHTML = `<table border="1" cellpadding="10" cellspacing="0" style="${tableStyle()}">
+            <tr bgcolor="#1e3a7b">
+                <th style="${thStyle()}"><font color="#ffffff">LOB</font></th>
+                <th style="${thStyle()}"><font color="#ffffff">CCMS</font></th>
+                <th style="${thStyle()}"><font color="#ffffff">Agent Name</font></th>
+                <th style="${thStyle()}"><font color="#ffffff">Shift</font></th>
+                <th style="${thStyle()}"><font color="#ffffff">Date</font></th>
             </tr>
-            <tr>
+            <tr bgcolor="#f5f6fb">
                 <td style="${tdStyle()}">${lob}</td>
                 <td style="${tdStyle()}">${myCcms}</td>
                 <td style="${tdStyle()}">${myName}</td>
@@ -377,15 +383,15 @@
                 `Translate this Arabic technical issue description to professional concise English (max 5 words) suitable for a call center system report: "${typeAr}". Return only the translated phrase, nothing else.`
             );
 
-            const tableHTML = `<table style="${tableStyle()}">
-                <tr>
-                    <th style="${thStyle()}">CCMS</th>
-                    <th style="${thStyle()}">Name</th>
-                    <th style="${thStyle()}">Issue From</th>
-                    <th style="${thStyle()}">Issue to</th>
-                    <th style="${thStyle()}">Issue Type</th>
+            const tableHTML = `<table border="1" cellpadding="10" cellspacing="0" style="${tableStyle()}">
+                <tr bgcolor="#1e3a7b">
+                    <th style="${thStyle()}"><font color="#ffffff">CCMS</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Name</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Issue From</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Issue to</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Issue Type</font></th>
                 </tr>
-                <tr>
+                <tr bgcolor="#f5f6fb">
                     <td style="${tdStyle()}">${ccms}</td>
                     <td style="${tdStyle()}">${name}</td>
                     <td style="${tdStyle()}">${fmtTime(from)}</td>
@@ -424,34 +430,26 @@
                 `Translate this Arabic issue description to professional English suitable for a call center email report. Be concise and formal. Keep it to 1-2 sentences max: "${issueAr}". Return only the translation, nothing else.`
             );
 
-            const tableHTML = `<table style="${tableStyle()}">
-                <tr>
-                    <th style="${thStyle()}">Customer number || phone number</th>
-                    <th style="${thStyle()}">Date</th>
-                    <th style="${thStyle()}">Time of the call</th>
-                    <th style="${thStyle()}">Call Type</th>
-                    <th style="${thStyle()}">Issue Description</th>
+            const tableHTML = `<table border="1" cellpadding="10" cellspacing="0" style="${tableStyle()}">
+                <tr bgcolor="#1e3a7b">
+                    <th style="${thStyle()}"><font color="#ffffff">Customer number || phone number</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Date</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Time of the call</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Call Type</font></th>
+                    <th style="${thStyle()}"><font color="#ffffff">Issue Description</font></th>
+                </tr>
+                <tr bgcolor="#f5f6fb">
+                    <td style="${tdStyle()}" rowspan="3">${phone}</td>
+                    <td style="${tdStyle()}" rowspan="3">${dateDisplay}</td>
+                    <td style="${tdStyle()}" rowspan="3">${fmtTime(time)}</td>
+                    <td style="${tdStyle()}"><b>${callType}</b></td>
+                    <td style="${tdStyle()}" rowspan="3">${translated.trim()}</td>
                 </tr>
                 <tr>
-                    <td style="${tdStyle()}">${phone}</td>
-                    <td style="${tdStyle()}">${dateDisplay}</td>
-                    <td style="${tdStyle()}">${fmtTime(time)}</td>
-                    <td style="${tdStyle()}">${callType}</td>
-                    <td style="${tdStyle()}">${translated.trim()}</td>
-                </tr>
-                <tr>
-                    <td style="${tdStyle()}"></td>
-                    <td style="${tdStyle()}"></td>
-                    <td style="${tdStyle()}"></td>
                     <td style="${tdStyle()}">Call under 1 minute</td>
-                    <td style="${tdStyle()}"></td>
                 </tr>
                 <tr>
-                    <td style="${tdStyle()}"></td>
-                    <td style="${tdStyle()}"></td>
-                    <td style="${tdStyle()}"></td>
                     <td style="${tdStyle()}">Call over 10 minutes</td>
-                    <td style="${tdStyle()}"></td>
                 </tr>
             </table>`;
 

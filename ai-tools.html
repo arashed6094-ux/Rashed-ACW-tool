@@ -253,8 +253,6 @@
 
 <script>
     const WORKER_URL = 'https://rashed-ai.arashed6094.workers.dev/';
-    const SB_URL = 'https://dhnxkshblavokipiafsi.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRobnhrc2hibGF2b2tpcGlhZnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzgxMjYsImV4cCI6MjA5ODIxNDEyNn0.gZ27O1-0IXAmk47YnnsfdwL8KwX2A2R1O78W1hv9XAI';
 
     // Set today's date on call validation
     document.getElementById('cv-date').value = new Date().toISOString().slice(0,10);
@@ -284,15 +282,23 @@
         document.getElementById('cv-type-val').value = val;
     }
 
-    /* ===== AI CALL ===== */
+    /* ===== AI CALL (FIXED) ===== */
     async function callAI(prompt) {
-        const res = await fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt })
-        });
-        const data = await res.json();
-        return data.result || '';
+        try {
+            const res = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                throw new Error(data.error || 'Unknown AI error');
+            }
+            return data.result || '';
+        } catch (e) {
+            console.error('AI Error:', e.message);
+            throw e;
+        }
     }
 
     function fmtTime(t) {
@@ -311,12 +317,6 @@
     }
     function tdStyle() {
         return 'padding:10px 14px;border:1px solid #cccccc;font-size:13px;vertical-align:top;font-family:Arial,sans-serif;';
-    }
-    function thAttrs() {
-        return 'bgcolor="#1e3a7b"';
-    }
-    function trEvenAttrs() {
-        return 'bgcolor="#f5f6fb"';
     }
 
     /* ===== SWAP REQUEST ===== */
@@ -363,7 +363,7 @@
         document.getElementById('swap-result').classList.add('visible');
     }
 
-    /* ===== SYSTEM ISSUE ===== */
+    /* ===== SYSTEM ISSUE (FIXED) ===== */
     async function generateIssue() {
         const ccms = document.getElementById('issue-ccms').value.trim();
         const name = document.getElementById('issue-name').value.trim();
@@ -403,12 +403,12 @@
             document.getElementById('issue-table-wrap').innerHTML = tableHTML;
             document.getElementById('issue-result').classList.add('visible');
         } catch(e) {
-            alert('AI error. Check your connection.');
+            alert('AI Error: ' + e.message);
         }
         btn.textContent = '🤖 Generate with AI'; btn.disabled = false;
     }
 
-    /* ===== CALL VALIDATION ===== */
+    /* ===== CALL VALIDATION (FIXED) ===== */
     async function generateCallVal() {
         const phone = document.getElementById('cv-phone').value.trim();
         const date = document.getElementById('cv-date').value;
@@ -456,12 +456,12 @@
             document.getElementById('cv-table-wrap').innerHTML = tableHTML;
             document.getElementById('cv-result').classList.add('visible');
         } catch(e) {
-            alert('AI error. Check your connection.');
+            alert('AI Error: ' + e.message);
         }
         btn.textContent = '🤖 Generate with AI'; btn.disabled = false;
     }
 
-    /* ===== OTHER EMAIL ===== */
+    /* ===== OTHER EMAIL (FIXED) ===== */
     async function generateOther() {
         const text = document.getElementById('other-content-ar').value.trim();
         if (!text) { alert('Please write what you want to say.'); return; }
@@ -484,7 +484,8 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
             output.textContent = email.trim();
             output.classList.remove('loading');
         } catch(e) {
-            output.textContent = 'Error generating email. Please try again.';
+            output.textContent = 'AI Error: ' + e.message;
+            output.classList.remove('loading');
         }
         btn.textContent = '🤖 Generate Email with AI'; btn.disabled = false;
     }
@@ -493,7 +494,6 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
     function copyTableHTML(containerId) {
         const el = document.getElementById(containerId);
         
-        // Method: use ClipboardItem with both HTML and plain text
         try {
             const htmlContent = el.innerHTML;
             const fullHTML = `<html><body>${htmlContent}</body></html>`;
@@ -577,3 +577,4 @@ Keep it concise, professional, and formal. End with "Thank you for your cooperat
 </script>
 </body>
 </html>
+

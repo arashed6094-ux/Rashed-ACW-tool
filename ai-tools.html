@@ -162,6 +162,7 @@
                 <b style="color:#1e3a7b;">Subject: Swap Request</b>
                 <button class="copy-html-btn" onclick="copyTableHTML('swap-table-wrap')">📋 Copy</button>
                 <button class="copy-html-btn" onclick="openTableInNewTab('swap-table-wrap','Swap Request')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="copy-html-btn" onclick="copyHTMLSource('swap-table-wrap')" style="background:#555;">📄 HTML Source</button>
                 <button class="save-ai-btn" onclick="saveResultToAINotes('swap-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="swap-table-wrap" style="direction:ltr;"></div>
@@ -195,6 +196,7 @@
                 <b style="color:#1e3a7b;">Subject: System Issue</b>
                 <button class="copy-html-btn" onclick="copyTableHTML('issue-table-wrap')">📋 Copy</button>
                 <button class="copy-html-btn" onclick="openTableInNewTab('issue-table-wrap','System Issue')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="copy-html-btn" onclick="copyHTMLSource('issue-table-wrap')" style="background:#555;">📄 HTML Source</button>
                 <button class="save-ai-btn" onclick="saveResultToAINotes('issue-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="issue-table-wrap" style="direction:ltr;"></div>
@@ -233,6 +235,7 @@
                 <b style="color:#1e3a7b;">Subject: Call Validation</b>
                 <button class="copy-html-btn" onclick="copyTableHTML('cv-table-wrap')">📋 Copy</button>
                 <button class="copy-html-btn" onclick="openTableInNewTab('cv-table-wrap','Call Validation')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="copy-html-btn" onclick="copyHTMLSource('cv-table-wrap')" style="background:#555;">📄 HTML Source</button>
                 <button class="save-ai-btn" onclick="saveResultToAINotes('cv-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="cv-table-wrap" style="direction:ltr;"></div>
@@ -757,7 +760,7 @@ Arabic text: "${text}"`
         }
     }
 
-    function copyTextFallback(text) {
+    function copyTextFallback(text, successMsg) {
         const ta = document.createElement('textarea');
         ta.value = text;
         ta.style.position = 'fixed';
@@ -767,7 +770,28 @@ Arabic text: "${text}"`
         ta.select();
         const ok = document.execCommand('copy');
         document.body.removeChild(ta);
-        alert(ok ? '✅ Copied!' : '⚠️ Could not copy automatically - please select and copy the text manually.');
+        alert(ok ? (successMsg || '✅ Copied!') : '⚠️ Could not copy automatically - please select and copy the text manually.');
+    }
+
+    // Last-resort option for machines where even plain formatted copy/paste strips
+    // the table (e.g. IT clipboard/DLP policies that force plain text only).
+    // This copies the raw HTML markup as plain text, which survives any plain-text-only
+    // clipboard restriction. Paste it into Roundcube's "Source code" view (usually under
+    // the "..." button in the toolbar) instead of the normal message body, then switch back -
+    // Roundcube will render it as a proper formatted table.
+    function copyHTMLSource(containerId) {
+        const el = document.getElementById(containerId);
+        const html = el.innerHTML.trim();
+        const msg = '✅ Copied the HTML code! In Roundcube click "..." in the toolbar → "Source code", clear it, paste this, then switch back to see the formatted table.';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(html).then(() => {
+                alert(msg);
+            }).catch(() => {
+                copyTextFallback(html, msg);
+            });
+        } else {
+            copyTextFallback(html, msg);
+        }
     }
 
     /* ===== SAVE TO AI NOTES ===== */

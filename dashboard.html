@@ -163,9 +163,9 @@
                 if (days < 1 || days > 365) return;
             } else {
                 days = currentRange === 'week' ? 7 : 30;
-                const from = new Date();
+                const from = getEgyptNow();
                 from.setDate(from.getDate() - days + 1);
-                fromStr = from.toISOString().slice(0,10);
+                fromStr = egyptDateStr(from);
             }
             const from = new Date(fromStr);
 
@@ -193,7 +193,7 @@
 
         } else {
             // by hour for selected day
-            const day = document.getElementById('day-picker').value || new Date().toISOString().slice(0,10);
+            const day = document.getElementById('day-picker').value || egyptDateStr(getEgyptNow());
             const rows = await sbFetch(
                 `hourly_stats?select=stat_key,hour,count&day=eq.${day}&order=hour.asc`
             );
@@ -202,7 +202,7 @@
                 if (!map[r.hour]) map[r.hour] = { versandkosten: 0, vorlagen: 0 };
                 map[r.hour][r.stat_key] = (map[r.hour][r.stat_key] || 0) + r.count;
             });
-            for (let h = 0; h < 24; h++) {
+            for (let h = 8; h <= 23; h++) {
                 labels.push(`${String(h).padStart(2,'0')}:00`);
                 ordersData.push(map[h]?.versandkosten || 0);
                 serviceData.push(map[h]?.vorlagen     || 0);
@@ -324,13 +324,24 @@
         loadChart();
     }
 
-    // Set default values
-    const todayStr = new Date().toISOString().slice(0,10);
+    // ── Egypt local time helpers (stats are always recorded in Egypt time) ──
+    function getEgyptNow() {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));
+    }
+    function egyptDateStr(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    // Set default values (based on Egypt's current date)
+    const todayStr = egyptDateStr(getEgyptNow());
     document.getElementById('day-picker').value = todayStr;
     document.getElementById('day-picker').addEventListener('change', loadChart);
     document.getElementById('range-to').value = todayStr;
-    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
-    document.getElementById('range-from').value = weekAgo.toISOString().slice(0,10);
+    const weekAgo = getEgyptNow(); weekAgo.setDate(weekAgo.getDate() - 6);
+    document.getElementById('range-from').value = egyptDateStr(weekAgo);
 
     // Init
     loadSummary();

@@ -244,10 +244,34 @@
 
 <!-- ===== CALL SECTION ===== -->
 <div class="sub-section" id="sec-call">
-    <div class="card" style="text-align:center; padding:40px;">
-        <div style="font-size:48px; margin-bottom:12px;">📞</div>
-        <h3 style="color:#1e3a7b; margin:0 0 8px 0;">Call Assistant</h3>
-        <p style="color:#888; font-size:14px;">Coming soon — will help you during calls with AI-powered suggestions.</p>
+    <div class="card">
+        <div class="pill-row">
+            <div class="pill active" id="btn-side-customer" onclick="showCallSide('customer')">Customer Side</div>
+            <div class="pill red" id="btn-side-agent" onclick="showCallSide('agent')">Agent Side</div>
+        </div>
+        <p style="color:#888; font-size:12px; text-align:center; margin:0;">Write in Arabic to get the German phrase (with 3 options), or write in German to get its Arabic meaning and examples.</p>
+    </div>
+
+    <!-- CUSTOMER SIDE -->
+    <div class="card sub-section visible" id="side-customer">
+        <div class="section-title">🗣️ Customer Side</div>
+        <label>Write in Arabic or German:</label>
+        <textarea id="cs-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
+        <button class="btn btn-blue" onclick="generateCallAssist(this,'customer')">🤖 Translate</button>
+        <div class="result-area" id="cs-result">
+            <div id="cs-output"></div>
+        </div>
+    </div>
+
+    <!-- AGENT SIDE -->
+    <div class="card sub-section" id="side-agent">
+        <div class="section-title">🎧 Agent Side</div>
+        <label>Write in Arabic or German:</label>
+        <textarea id="as-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
+        <button class="btn btn-blue" onclick="generateCallAssist(this,'agent')">🤖 Translate</button>
+        <div class="result-area" id="as-result">
+            <div id="as-output"></div>
+        </div>
     </div>
 </div>
 
@@ -280,6 +304,123 @@
         document.querySelectorAll('#cv-type-group .pill-type').forEach(p => p.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('cv-type-val').value = val;
+    }
+
+    /* ===== CALL ASSISTANT ===== */
+    function showCallSide(side) {
+        ['customer','agent'].forEach(s => {
+            document.getElementById('side-'+s).classList.remove('visible');
+            document.getElementById('btn-side-'+s).classList.remove('active');
+        });
+        document.getElementById('side-'+side).classList.add('visible');
+        document.getElementById('btn-side-'+side).classList.add('active');
+    }
+
+    function escapeHTML(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function extractJSON(raw) {
+        let s = raw.trim();
+        s = s.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '');
+        return JSON.parse(s);
+    }
+
+    let lastCallAssistItems = { customer: [], agent: [] };
+
+    async function generateCallAssist(btn, side) {
+        const inputId  = side === 'customer' ? 'cs-input'  : 'as-input';
+        const outputId = side === 'customer' ? 'cs-output' : 'as-output';
+        const resultId = side === 'customer' ? 'cs-result' : 'as-result';
+
+        const text = document.getElementById(inputId).value.trim();
+        if (!text) { alert('Please write something first.'); return; }
+
+        btn.textContent = '⏳ Translating...'; btn.disabled = true;
+        const outputEl = document.getElementById(outputId);
+        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        document.getElementById(resultId).classList.add('visible');
+
+        const isArabic = /[\u0600-\u06FF]/.test(text);
+
+        const prompt = isArabic
+            ? `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+The agent wrote this in Arabic: "${text}"
+Translate it into German, using the polite, professional tone used with customers in a call center service context.
+Give exactly 3 different German phrasing variants that convey the same meaning.
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"ar_to_de","variants":[{"de":"German variant 1","ar":"Arabic translation of variant 1"},{"de":"German variant 2","ar":"Arabic translation of variant 2"},{"de":"German variant 3","ar":"Arabic translation of variant 3"}]}`
+            : `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+The agent wrote this in German: "${text}"
+Translate it to Arabic and briefly explain its meaning/usage in Arabic (1-2 sentences).
+Then give exactly 3 example German sentences using this word/phrase in a call-center customer service context, each with its Arabic translation.
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"de_to_ar","meaning":"Arabic explanation of the meaning","examples":[{"de":"German example 1","ar":"Arabic translation of example 1"},{"de":"German example 2","ar":"Arabic translation of example 2"},{"de":"German example 3","ar":"Arabic translation of example 3"}]}`;
+
+        try {
+            const raw = await callAI(prompt);
+            renderCallAssistResult(outputEl, raw, side);
+        } catch(e) {
+            outputEl.innerHTML = `<span style="color:#c0272d;">AI Error: ${escapeHTML(e.message)}</span>`;
+        }
+        btn.textContent = '🤖 Translate'; btn.disabled = false;
+    }
+
+    function callAssistCardHTML(v, i, side, label) {
+        return `<div style="background:#f5f6fb; border:2px solid #1e3a7b; border-radius:10px; padding:12px; margin-bottom:10px;">
+            <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:4px; direction:ltr; text-align:left;">${label} ${i+1}</div>
+            <div style="font-size:14px; color:#1e3a7b; font-weight:bold; margin-bottom:6px; direction:ltr; text-align:left;">${escapeHTML(v.de)}</div>
+            <div style="font-size:13px; color:#555; direction:rtl; text-align:right; margin-bottom:8px;">${escapeHTML(v.ar)}</div>
+            <button class="save-ai-btn" onclick="saveCallAssistItem('${side}', ${i})">💡 Save to AI Notes</button>
+        </div>`;
+    }
+
+    function renderCallAssistResult(outputEl, raw, side) {
+        let data;
+        try { data = extractJSON(raw); }
+        catch(e) {
+            outputEl.innerHTML = `<div class="ai-result">${escapeHTML(raw)}</div>`;
+            return;
+        }
+
+        let items = [];
+        let html = '';
+
+        if (data.type === 'ar_to_de' && Array.isArray(data.variants)) {
+            items = data.variants;
+            html = items.map((v,i) => callAssistCardHTML(v, i, side, 'Option')).join('');
+        } else if (data.type === 'de_to_ar') {
+            items = Array.isArray(data.examples) ? data.examples : [];
+            html = `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
+                        <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
+                        <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
+                    </div>` +
+                    items.map((v,i) => callAssistCardHTML(v, i, side, 'Example')).join('');
+        } else {
+            outputEl.innerHTML = `<div class="ai-result">${escapeHTML(raw)}</div>`;
+            return;
+        }
+
+        lastCallAssistItems[side] = items;
+        outputEl.innerHTML = html;
+    }
+
+    function saveCallAssistItem(side, idx) {
+        const item = lastCallAssistItems[side][idx];
+        if (!item) return;
+        saveCallResultToAINotes(`${item.de}\n${item.ar}`);
+    }
+
+    function saveCallResultToAINotes(text) {
+        const pin = localStorage.getItem('rashed_pin') || 'guest';
+        const key = 'ai_notes_' + pin;
+        const countKey = 'ai_notes_count_' + pin;
+        const count = (parseInt(localStorage.getItem(countKey) || '0', 10)) + 1;
+        localStorage.setItem(countKey, String(count));
+        const timestamp = new Date().toLocaleString();
+        const existing = localStorage.getItem(key) || '';
+        localStorage.setItem(key, existing + `\n\n--- #${count} · ${timestamp} ---\n` + text);
+        alert('✅ Saved to AI Notes!');
     }
 
     /* ===== AI CALL (FIXED) ===== */
@@ -430,6 +571,20 @@
                 `Translate this Arabic issue description to professional English suitable for a call center email report. Be concise and formal. Keep it to 1-2 sentences max: "${issueAr}". Return only the translation, nothing else.`
             );
 
+            const callTypes = ['Dropped call', 'Call under 1 minute', 'Call over 10 minutes'];
+            const rowBorder = 'border-top:2px solid #1e3a7b;';
+
+            const rowsHTML = callTypes.map(type => {
+                const isSelected = type === callType;
+                return `<tr bgcolor="${isSelected ? '#f5f6fb' : '#ffffff'}">
+                    <td style="${tdStyle()}${rowBorder}">${isSelected ? phone : ''}</td>
+                    <td style="${tdStyle()}${rowBorder}">${isSelected ? dateDisplay : ''}</td>
+                    <td style="${tdStyle()}${rowBorder}">${isSelected ? fmtTime(time) : ''}</td>
+                    <td style="${tdStyle()}${rowBorder}"><b>${type}</b></td>
+                    <td style="${tdStyle()}${rowBorder}">${isSelected ? translated.trim() : ''}</td>
+                </tr>`;
+            }).join('');
+
             const tableHTML = `<table border="1" cellpadding="10" cellspacing="0" style="${tableStyle()}">
                 <tr bgcolor="#1e3a7b">
                     <th style="${thStyle()}"><font color="#ffffff">Customer number || phone number</font></th>
@@ -438,19 +593,7 @@
                     <th style="${thStyle()}"><font color="#ffffff">Call Type</font></th>
                     <th style="${thStyle()}"><font color="#ffffff">Issue Description</font></th>
                 </tr>
-                <tr bgcolor="#f5f6fb">
-                    <td style="${tdStyle()}" rowspan="3">${phone}</td>
-                    <td style="${tdStyle()}" rowspan="3">${dateDisplay}</td>
-                    <td style="${tdStyle()}" rowspan="3">${fmtTime(time)}</td>
-                    <td style="${tdStyle()}"><b>${callType}</b></td>
-                    <td style="${tdStyle()}" rowspan="3">${translated.trim()}</td>
-                </tr>
-                <tr>
-                    <td style="${tdStyle()}">Call under 1 minute</td>
-                </tr>
-                <tr>
-                    <td style="${tdStyle()}">Call over 10 minutes</td>
-                </tr>
+                ${rowsHTML}
             </table>`;
 
             document.getElementById('cv-table-wrap').innerHTML = tableHTML;
@@ -476,10 +619,10 @@
 
         try {
             const email = await callAI(
-                `You are a professional call center email writer for Personal Shop Germany. 
-Write a professional formal email in English based on this Arabic description: "${text}".
-Format: Subject line first, then blank line, then email body. 
-Keep it concise, professional, and formal. End with "Thank you for your cooperation."`
+                `Translate the following Arabic text into English as a formal, official business email.
+Preserve exactly what the writer wants to say - do not add any content, phrases, sign-offs, or closing lines that are not implied by the original text itself.
+Only make it read as a properly formatted, official English email (appropriate subject line if one naturally fits, and email body).
+Arabic text: "${text}"`
             );
             output.textContent = email.trim();
             output.classList.remove('loading');

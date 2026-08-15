@@ -711,47 +711,63 @@ Arabic text: "${text}"`
     }
 
     /* ===== COPY FUNCTIONS ===== */
+    // We intentionally do NOT use navigator.clipboard.write()/ClipboardItem here.
+    // That API needs clipboard-write permission and is inconsistent across browsers/
+    // corporate policies - on some setups it silently "succeeds" but only writes
+    // plain text, which is exactly what caused the table to paste without formatting
+    // for some users. document.execCommand('copy') on a real DOM selection has been
+    // supported the same way in every browser for years and needs no permission,
+    // so it copies the table's actual HTML formatting reliably for everyone.
     function copyTableHTML(containerId) {
         const el = document.getElementById(containerId);
-        
-        try {
-            const htmlContent = el.innerHTML;
-            const fullHTML = `<html><body>${htmlContent}</body></html>`;
-            
-            if (navigator.clipboard && window.ClipboardItem) {
-                const item = new ClipboardItem({
-                    'text/html': new Blob([fullHTML], { type: 'text/html' }),
-                    'text/plain': new Blob([el.innerText], { type: 'text/plain' })
-                });
-                navigator.clipboard.write([item]).then(() => {
-                    alert('✅ Copied! Now paste it in Roundcube email body.');
-                }).catch(() => {
-                    fallbackCopy(el);
-                });
-            } else {
-                fallbackCopy(el);
-            }
-        } catch(e) {
-            fallbackCopy(el);
+        const ok = selectAndCopy(el);
+        if (ok) {
+            alert('✅ Copied! Now paste it in Roundcube email body.');
+        } else {
+            alert('⚠️ Could not copy automatically on this browser. Opening the table in a new tab instead - select all (Ctrl+A) then copy (Ctrl+C) from there.');
+            openTableInNewTab(containerId, 'Table');
         }
     }
 
-    function fallbackCopy(el) {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand('copy');
-        sel.removeAllRanges();
-        alert('✅ Copied! Paste directly into your email body in Roundcube.');
+    function selectAndCopy(el) {
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            const success = document.execCommand('copy');
+            sel.removeAllRanges();
+            return success;
+        } catch(e) {
+            return false;
+        }
     }
 
     function copyText(elId) {
         const text = document.getElementById(elId).textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            alert('✅ Copied!');
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copied!');
+            }).catch(() => {
+                copyTextFallback(text);
+            });
+        } else {
+            copyTextFallback(text);
+        }
+    }
+
+    function copyTextFallback(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert(ok ? '✅ Copied!' : '⚠️ Could not copy automatically - please select and copy the text manually.');
     }
 
     /* ===== SAVE TO AI NOTES ===== */

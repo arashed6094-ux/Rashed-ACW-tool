@@ -95,6 +95,21 @@
 <div class="pill-row">
     <div class="pill active" id="btn-email" onclick="showMain('email')">✉️ Email Assistant</div>
     <div class="pill" id="btn-call" onclick="showMain('call')">📞 Call Assistant</div>
+    <div class="pill" id="btn-translate" onclick="showMain('translate')">🌐 Translation</div>
+</div>
+
+<!-- ===== TRANSLATION SECTION ===== -->
+<div class="sub-section" id="sec-translate">
+    <div class="card">
+        <div class="section-title">🌐 Translation</div>
+        <p style="color:#888; font-size:12px; margin:0 0 4px 0;">اكتب أي كلمة أو جملة بالعربي أو الألماني وهيتم شرحها وترجمتها بالتفصيل.</p>
+        <label>Write in Arabic or German:</label>
+        <textarea id="tr-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
+        <button class="btn btn-blue" onclick="generateTranslate(this)">🤖 Translate</button>
+        <div class="result-area" id="tr-result">
+            <div id="tr-output"></div>
+        </div>
+    </div>
 </div>
 
 <!-- ===== EMAIL SECTION ===== -->
@@ -249,15 +264,15 @@
             <div class="pill active" id="btn-side-customer" onclick="showCallSide('customer')">Customer Side</div>
             <div class="pill red" id="btn-side-agent" onclick="showCallSide('agent')">Agent Side</div>
         </div>
-        <p style="color:#888; font-size:12px; text-align:center; margin:0;">Write in Arabic to get the German phrase (with 3 options), or write in German to get its Arabic meaning and examples.</p>
     </div>
 
     <!-- CUSTOMER SIDE -->
     <div class="card sub-section visible" id="side-customer">
         <div class="section-title">🗣️ Customer Side</div>
-        <label>Write in Arabic or German:</label>
-        <textarea id="cs-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
-        <button class="btn btn-blue" onclick="generateCallAssist(this,'customer')">🤖 Translate</button>
+        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">اكتب هنا الكلمة أو الجملة اللي قالهالك العميل بالألماني، وهنشرحلك معناها ونترجمها ونديك مثالين.</p>
+        <label>What the customer said (German):</label>
+        <textarea id="cs-input" placeholder="اكتب هنا الجملة الألمانية اللي قالها العميل..." style="min-height:90px;"></textarea>
+        <button class="btn btn-blue" onclick="generateCallSideCustomer(this)">🤖 Explain</button>
         <div class="result-area" id="cs-result">
             <div id="cs-output"></div>
         </div>
@@ -266,9 +281,10 @@
     <!-- AGENT SIDE -->
     <div class="card sub-section" id="side-agent">
         <div class="section-title">🎧 Agent Side</div>
-        <label>Write in Arabic or German:</label>
-        <textarea id="as-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
-        <button class="btn btn-blue" onclick="generateCallAssist(this,'agent')">🤖 Translate</button>
+        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">اكتب هنا اللي عايز تقوله للعميل بالعربي، وهنترجمهولك بالألماني بطريقتين مختلفتين.</p>
+        <label>What you want to say (Arabic):</label>
+        <textarea id="as-input" placeholder="اكتب هنا اللي عايز تقوله للعميل بالعربي..." style="min-height:90px;"></textarea>
+        <button class="btn btn-blue" onclick="generateCallSideAgent(this)">🤖 Translate</button>
         <div class="result-area" id="as-result">
             <div id="as-output"></div>
         </div>
@@ -283,7 +299,7 @@
     document.getElementById('swap-date').value = new Date().toISOString().slice(0,10);
 
     function showMain(name) {
-        ['email','call'].forEach(n => {
+        ['email','call','translate'].forEach(n => {
             document.getElementById('sec-'+n).classList.remove('visible');
             document.getElementById('btn-'+n).classList.remove('active');
         });
@@ -326,92 +342,26 @@
         return JSON.parse(s);
     }
 
-    let lastCallAssistItems = { customer: [], agent: [] };
+    // Shared store of the last-rendered translatable items, keyed by output element id,
+    // so the "Save to AI Notes" buttons can reference an item by index without any HTML-escaping risk.
+    let lastAIItems = {};
 
-    async function generateCallAssist(btn, side) {
-        const inputId  = side === 'customer' ? 'cs-input'  : 'as-input';
-        const outputId = side === 'customer' ? 'cs-output' : 'as-output';
-        const resultId = side === 'customer' ? 'cs-result' : 'as-result';
-
-        const text = document.getElementById(inputId).value.trim();
-        if (!text) { alert('Please write something first.'); return; }
-
-        btn.textContent = '⏳ Translating...'; btn.disabled = true;
-        const outputEl = document.getElementById(outputId);
-        outputEl.innerHTML = '<span class="loading">Generating...</span>';
-        document.getElementById(resultId).classList.add('visible');
-
-        const isArabic = /[\u0600-\u06FF]/.test(text);
-
-        const prompt = isArabic
-            ? `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
-The agent wrote this in Arabic: "${text}"
-Translate it into German, using the polite, professional tone used with customers in a call center service context.
-Give exactly 3 different German phrasing variants that convey the same meaning.
-Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
-{"type":"ar_to_de","variants":[{"de":"German variant 1","ar":"Arabic translation of variant 1"},{"de":"German variant 2","ar":"Arabic translation of variant 2"},{"de":"German variant 3","ar":"Arabic translation of variant 3"}]}`
-            : `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
-The agent wrote this in German: "${text}"
-Translate it to Arabic and briefly explain its meaning/usage in Arabic (1-2 sentences).
-Then give exactly 3 example German sentences using this word/phrase in a call-center customer service context, each with its Arabic translation.
-Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
-{"type":"de_to_ar","meaning":"Arabic explanation of the meaning","examples":[{"de":"German example 1","ar":"Arabic translation of example 1"},{"de":"German example 2","ar":"Arabic translation of example 2"},{"de":"German example 3","ar":"Arabic translation of example 3"}]}`;
-
-        try {
-            const raw = await callAI(prompt);
-            renderCallAssistResult(outputEl, raw, side);
-        } catch(e) {
-            outputEl.innerHTML = `<span style="color:#c0272d;">AI Error: ${escapeHTML(e.message)}</span>`;
-        }
-        btn.textContent = '🤖 Translate'; btn.disabled = false;
-    }
-
-    function callAssistCardHTML(v, i, side, label) {
+    function itemCardHTML(v, i, outputId, label) {
         return `<div style="background:#f5f6fb; border:2px solid #1e3a7b; border-radius:10px; padding:12px; margin-bottom:10px;">
             <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:4px; direction:ltr; text-align:left;">${label} ${i+1}</div>
             <div style="font-size:14px; color:#1e3a7b; font-weight:bold; margin-bottom:6px; direction:ltr; text-align:left;">${escapeHTML(v.de)}</div>
             <div style="font-size:13px; color:#555; direction:rtl; text-align:right; margin-bottom:8px;">${escapeHTML(v.ar)}</div>
-            <button class="save-ai-btn" onclick="saveCallAssistItem('${side}', ${i})">💡 Save to AI Notes</button>
+            <button class="save-ai-btn" onclick="saveAIItem('${outputId}', ${i})">💡 Save to AI Notes</button>
         </div>`;
     }
 
-    function renderCallAssistResult(outputEl, raw, side) {
-        let data;
-        try { data = extractJSON(raw); }
-        catch(e) {
-            outputEl.innerHTML = `<div class="ai-result">${escapeHTML(raw)}</div>`;
-            return;
-        }
-
-        let items = [];
-        let html = '';
-
-        if (data.type === 'ar_to_de' && Array.isArray(data.variants)) {
-            items = data.variants;
-            html = items.map((v,i) => callAssistCardHTML(v, i, side, 'Option')).join('');
-        } else if (data.type === 'de_to_ar') {
-            items = Array.isArray(data.examples) ? data.examples : [];
-            html = `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
-                        <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
-                        <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
-                    </div>` +
-                    items.map((v,i) => callAssistCardHTML(v, i, side, 'Example')).join('');
-        } else {
-            outputEl.innerHTML = `<div class="ai-result">${escapeHTML(raw)}</div>`;
-            return;
-        }
-
-        lastCallAssistItems[side] = items;
-        outputEl.innerHTML = html;
-    }
-
-    function saveCallAssistItem(side, idx) {
-        const item = lastCallAssistItems[side][idx];
+    function saveAIItem(outputId, idx) {
+        const item = (lastAIItems[outputId] || [])[idx];
         if (!item) return;
-        saveCallResultToAINotes(`${item.de}\n${item.ar}`);
+        saveTextToAINotesNumbered(`${item.de}\n${item.ar}`);
     }
 
-    function saveCallResultToAINotes(text) {
+    function saveTextToAINotesNumbered(text) {
         const pin = localStorage.getItem('rashed_pin') || 'guest';
         const key = 'ai_notes_' + pin;
         const countKey = 'ai_notes_count_' + pin;
@@ -421,6 +371,133 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
         const existing = localStorage.getItem(key) || '';
         localStorage.setItem(key, existing + `\n\n--- #${count} · ${timestamp} ---\n` + text);
         alert('✅ Saved to AI Notes!');
+    }
+
+    // --- Customer Side: what the customer said in German -> meaning + translation + 2 examples ---
+    async function generateCallSideCustomer(btn) {
+        const text = document.getElementById('cs-input').value.trim();
+        if (!text) { alert('Please write what the customer said first.'); return; }
+
+        btn.textContent = '⏳ Explaining...'; btn.disabled = true;
+        const outputEl = document.getElementById('cs-output');
+        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        document.getElementById('cs-result').classList.add('visible');
+
+        const prompt = `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+A customer said this in German: "${text}"
+Translate it to Arabic and briefly explain its meaning/usage in Arabic (1-2 sentences).
+Then give exactly 2 example German sentences that use this word/phrase in a call-center customer service context, each with its Arabic translation.
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"de_to_ar","meaning":"Arabic explanation of the meaning","examples":[{"de":"German example 1","ar":"Arabic translation of example 1"},{"de":"German example 2","ar":"Arabic translation of example 2"}]}`;
+
+        try {
+            const raw = await callAI(prompt);
+            const data = extractJSON(raw);
+            const items = Array.isArray(data.examples) ? data.examples : [];
+            lastAIItems['cs-output'] = items;
+            outputEl.innerHTML =
+                `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
+                    <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
+                    <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
+                </div>` +
+                items.map((v,i) => itemCardHTML(v, i, 'cs-output', 'Example')).join('');
+        } catch(e) {
+            outputEl.innerHTML = `<span style="color:#c0272d;">AI Error: ${escapeHTML(e.message)}</span>`;
+        }
+        btn.textContent = '🤖 Explain'; btn.disabled = false;
+    }
+
+    // --- Agent Side: what you want to say in Arabic -> 2 German phrasings only (no examples) ---
+    async function generateCallSideAgent(btn) {
+        const text = document.getElementById('as-input').value.trim();
+        if (!text) { alert('Please write what you want to say first.'); return; }
+
+        btn.textContent = '⏳ Translating...'; btn.disabled = true;
+        const outputEl = document.getElementById('as-output');
+        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        document.getElementById('as-result').classList.add('visible');
+
+        const prompt = `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+The agent wants to say this to a customer, written in Arabic: "${text}"
+Translate ONLY this exact sentence into German, using the polite, professional tone used with customers in a call center service context.
+Give exactly 2 different ways of phrasing this same sentence in German (not examples of other sentences - just 2 different ways to say this specific thing).
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"ar_to_de","variants":[{"de":"German phrasing 1","ar":"Arabic translation of phrasing 1"},{"de":"German phrasing 2","ar":"Arabic translation of phrasing 2"}]}`;
+
+        try {
+            const raw = await callAI(prompt);
+            const data = extractJSON(raw);
+            const items = Array.isArray(data.variants) ? data.variants : [];
+            lastAIItems['as-output'] = items;
+            outputEl.innerHTML = items.map((v,i) => itemCardHTML(v, i, 'as-output', 'Option')).join('');
+        } catch(e) {
+            outputEl.innerHTML = `<span style="color:#c0272d;">AI Error: ${escapeHTML(e.message)}</span>`;
+        }
+        btn.textContent = '🤖 Translate'; btn.disabled = false;
+    }
+
+    // --- General Translation capsule: deeper detail, 3 examples, + synonyms/antonyms for German input ---
+    async function generateTranslate(btn) {
+        const text = document.getElementById('tr-input').value.trim();
+        if (!text) { alert('Please write something first.'); return; }
+
+        btn.textContent = '⏳ Translating...'; btn.disabled = true;
+        const outputEl = document.getElementById('tr-output');
+        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        document.getElementById('tr-result').classList.add('visible');
+
+        const isArabic = /[\u0600-\u06FF]/.test(text);
+
+        const prompt = isArabic
+            ? `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+Translate this Arabic text into German: "${text}"
+Give exactly 3 example German sentences that use this translation in a call-center customer service context, each with its Arabic translation.
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"ar_to_de","variants":[{"de":"German example 1","ar":"Arabic translation of example 1"},{"de":"German example 2","ar":"Arabic translation of example 2"},{"de":"German example 3","ar":"Arabic translation of example 3"}]}`
+            : `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
+Translate this German text to Arabic and briefly explain its meaning/usage in Arabic (1-2 sentences): "${text}"
+Then give exactly 3 example German sentences using it in a call-center customer service context, each with its Arabic translation.
+Then list German synonyms and antonyms of the word/phrase, if any exist (empty arrays if none exist).
+Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this structure:
+{"type":"de_to_ar","meaning":"Arabic explanation of the meaning","examples":[{"de":"German example 1","ar":"Arabic translation of example 1"},{"de":"German example 2","ar":"Arabic translation of example 2"},{"de":"German example 3","ar":"Arabic translation of example 3"}],"synonyms":["synonym1","synonym2"],"antonyms":["antonym1","antonym2"]}`;
+
+        try {
+            const raw = await callAI(prompt);
+            const data = extractJSON(raw);
+            let html = '';
+            let items = [];
+
+            if (data.type === 'ar_to_de' && Array.isArray(data.variants)) {
+                items = data.variants;
+                html = items.map((v,i) => itemCardHTML(v, i, 'tr-output', 'Example')).join('');
+            } else if (data.type === 'de_to_ar') {
+                items = Array.isArray(data.examples) ? data.examples : [];
+                html = `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
+                            <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
+                            <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
+                        </div>` +
+                        items.map((v,i) => itemCardHTML(v, i, 'tr-output', 'Example')).join('');
+
+                const syn = Array.isArray(data.synonyms) ? data.synonyms.filter(Boolean) : [];
+                const ant = Array.isArray(data.antonyms) ? data.antonyms.filter(Boolean) : [];
+                if (syn.length || ant.length) {
+                    html += `<div style="background:#f0f2f9; border-left:3px solid #1e3a7b; border-radius:8px; padding:12px; margin-top:6px; direction:ltr; text-align:left; font-size:13px;">
+                        ${syn.length ? `<div style="margin-bottom:6px;"><b style="color:#1e3a7b;">Synonyms:</b> ${escapeHTML(syn.join(', '))}</div>` : ''}
+                        ${ant.length ? `<div><b style="color:#c0272d;">Antonyms:</b> ${escapeHTML(ant.join(', '))}</div>` : ''}
+                    </div>`;
+                }
+            } else {
+                outputEl.innerHTML = `<div class="ai-result">${escapeHTML(raw)}</div>`;
+                btn.textContent = '🤖 Translate'; btn.disabled = false;
+                return;
+            }
+
+            lastAIItems['tr-output'] = items;
+            outputEl.innerHTML = html;
+        } catch(e) {
+            outputEl.innerHTML = `<span style="color:#c0272d;">AI Error: ${escapeHTML(e.message)}</span>`;
+        }
+        btn.textContent = '🤖 Translate'; btn.disabled = false;
     }
 
     /* ===== AI CALL (FIXED) ===== */

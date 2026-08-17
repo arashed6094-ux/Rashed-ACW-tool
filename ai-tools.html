@@ -102,9 +102,9 @@
 <div class="sub-section" id="sec-translate">
     <div class="card">
         <div class="section-title">🌐 Translation</div>
-        <p style="color:#888; font-size:12px; margin:0 0 4px 0;">اكتب أي كلمة أو جملة بالعربي أو الألماني وهيتم شرحها وترجمتها بالتفصيل.</p>
+        <p style="color:#888; font-size:12px; margin:0 0 4px 0;">Write any word or sentence in Arabic or German and get a detailed explanation and translation.</p>
         <label>Write in Arabic or German:</label>
-        <textarea id="tr-input" placeholder="اكتب هنا بالعربي أو الألماني..." style="min-height:100px;"></textarea>
+        <textarea id="tr-input" placeholder="Write here in Arabic or German..." style="min-height:100px;"></textarea>
         <button class="btn btn-blue" onclick="generateTranslate(this)">🤖 Translate</button>
         <div class="result-area" id="tr-result">
             <div id="tr-output"></div>
@@ -116,10 +116,33 @@
 <div class="sub-section visible" id="sec-email">
     <div class="card">
         <div class="section-title">✉️ Email Assistant</div>
+
+        <div style="background:#f5f6fb; border:1px solid #ddd; border-radius:10px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:12px; color:#888; margin-bottom:8px;">Your info (saved automatically and reused in every email - edit anytime):</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:110px;">
+                    <label style="font-size:12px; margin-bottom:2px;">LOB:</label>
+                    <select id="agent-lob" onchange="saveAgentInfo()">
+                        <option value="German">German</option>
+                        <option value="French">French</option>
+                    </select>
+                </div>
+                <div style="flex:1; min-width:140px;">
+                    <label style="font-size:12px; margin-bottom:2px;">Your Name:</label>
+                    <input type="text" id="agent-name" placeholder="Your full name" oninput="saveAgentInfo()">
+                </div>
+                <div style="flex:1; min-width:120px;">
+                    <label style="font-size:12px; margin-bottom:2px;">Your CCMS:</label>
+                    <input type="text" id="agent-ccms" placeholder="e.g. 5727618" oninput="saveAgentInfo()">
+                </div>
+            </div>
+        </div>
+
         <div class="pill-row">
             <div class="pill-type active" id="etype-swap" onclick="showEmailType('swap')">🔄 Swap Request</div>
             <div class="pill-type" id="etype-issue" onclick="showEmailType('issue')">⚠️ System Issue</div>
             <div class="pill-type" id="etype-callval" onclick="showEmailType('callval')">📞 Call Validation</div>
+            <div class="pill-type" id="etype-offreq" onclick="showEmailType('offreq')">📅 Off / Annual / Shift Request</div>
             <div class="pill-type" id="etype-other" onclick="showEmailType('other')">📝 Other</div>
         </div>
     </div>
@@ -128,20 +151,8 @@
     <div class="card sub-section visible" id="form-swap">
         <div class="section-title">🔄 Swap Request</div>
 
-        <label>LOB:</label>
-        <select id="swap-lob">
-            <option value="German">German</option>
-            <option value="French">French</option>
-        </select>
-
-        <label>Your CCMS:</label>
-        <input type="text" id="swap-my-ccms" placeholder="e.g. 5727618">
-
         <label>Colleague's CCMS:</label>
         <input type="text" id="swap-col-ccms" placeholder="e.g. 5890759">
-
-        <label>Your Name:</label>
-        <input type="text" id="swap-my-name" placeholder="Your full name">
 
         <label>Colleague's Name:</label>
         <input type="text" id="swap-col-name" placeholder="Colleague's full name">
@@ -166,19 +177,12 @@
                 <button class="save-ai-btn" onclick="saveResultToAINotes('swap-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="swap-table-wrap" style="direction:ltr;"></div>
-            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
         </div>
     </div>
 
     <!-- SYSTEM ISSUE -->
     <div class="card sub-section" id="form-issue">
         <div class="section-title">⚠️ System Issue</div>
-
-        <label>Your CCMS:</label>
-        <input type="text" id="issue-ccms" placeholder="e.g. 5727618">
-
-        <label>Your Name:</label>
-        <input type="text" id="issue-name" placeholder="Your full name">
 
         <label>Issue Start Time:</label>
         <input type="time" id="issue-from">
@@ -187,7 +191,7 @@
         <input type="time" id="issue-to">
 
         <label>Issue Type (write in Arabic):</label>
-        <textarea id="issue-type-ar" placeholder="اكتب نوع المشكلة بالعربي هنا..." style="direction:rtl; text-align:right;"></textarea>
+        <textarea id="issue-type-ar" placeholder="Write the issue type in Arabic here..." style="direction:rtl; text-align:right;"></textarea>
 
         <button class="btn btn-blue" onclick="generateIssue()">🤖 Generate with AI</button>
 
@@ -200,7 +204,6 @@
                 <button class="save-ai-btn" onclick="saveResultToAINotes('issue-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="issue-table-wrap" style="direction:ltr;"></div>
-            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
         </div>
     </div>
 
@@ -226,7 +229,7 @@
         <input type="hidden" id="cv-type-val">
 
         <label>Issue Description (write in Arabic):</label>
-        <textarea id="cv-issue-ar" placeholder="اكتب وصف المشكلة بالعربي هنا..." style="direction:rtl; text-align:right;"></textarea>
+        <textarea id="cv-issue-ar" placeholder="Write the issue description in Arabic here..." style="direction:rtl; text-align:right;"></textarea>
 
         <button class="btn btn-blue" onclick="generateCallVal()">🤖 Generate with AI</button>
 
@@ -239,7 +242,46 @@
                 <button class="save-ai-btn" onclick="saveResultToAINotes('cv-table-wrap')">💡 AI Notes</button>
             </div>
             <div id="cv-table-wrap" style="direction:ltr;"></div>
-            <p style="font-size:12px; color:#888; margin-top:8px; direction:ltr;">Thank you for your cooperation.</p>
+        </div>
+    </div>
+
+    <!-- OFF / ANNUAL / SHIFT REQUEST -->
+    <div class="card sub-section" id="form-offreq">
+        <div class="section-title">📅 Off / Annual / Shift Request</div>
+        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">For each day, choose Off, Annual, or the shift time you need.</p>
+
+        <label>Monday:</label>
+        <select id="offreq-mon" class="offreq-day"></select>
+
+        <label>Tuesday:</label>
+        <select id="offreq-tue" class="offreq-day"></select>
+
+        <label>Wednesday:</label>
+        <select id="offreq-wed" class="offreq-day"></select>
+
+        <label>Thursday:</label>
+        <select id="offreq-thu" class="offreq-day"></select>
+
+        <label>Friday:</label>
+        <select id="offreq-fri" class="offreq-day"></select>
+
+        <label>Saturday:</label>
+        <select id="offreq-sat" class="offreq-day"></select>
+
+        <label>Sunday:</label>
+        <select id="offreq-sun" class="offreq-day"></select>
+
+        <button class="btn btn-blue" onclick="generateOffReq()">📧 Generate Email</button>
+
+        <div class="result-area" id="offreq-result">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                <b style="color:#1e3a7b;">Subject: Off / Annual / Shift Request</b>
+                <button class="copy-html-btn" onclick="copyTableHTML('offreq-table-wrap')">📋 Copy</button>
+                <button class="copy-html-btn" onclick="openTableInNewTab('offreq-table-wrap','Off / Annual / Shift Request')" style="background:#c0272d;">🔗 Open in Tab</button>
+                <button class="copy-html-btn" onclick="copyHTMLSource('offreq-table-wrap')" style="background:#555;">📄 HTML Source</button>
+                <button class="save-ai-btn" onclick="saveResultToAINotes('offreq-table-wrap')">💡 AI Notes</button>
+            </div>
+            <div id="offreq-table-wrap" style="direction:ltr;"></div>
         </div>
     </div>
 
@@ -247,7 +289,7 @@
     <div class="card sub-section" id="form-other">
         <div class="section-title">📝 Other Email</div>
         <label>What do you want to say? (write in Arabic):</label>
-        <textarea id="other-content-ar" placeholder="اكتب اللي عايز تقوله بالعربي هنا..." style="direction:rtl; text-align:right; min-height:120px;"></textarea>
+        <textarea id="other-content-ar" placeholder="Write what you want to say in Arabic here..." style="direction:rtl; text-align:right; min-height:120px;"></textarea>
         <button class="btn btn-blue" onclick="generateOther()">🤖 Generate Email with AI</button>
         <div class="result-area" id="other-result">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
@@ -256,6 +298,7 @@
                 <button class="save-ai-btn" onclick="saveTextToAINotes('other-email-output')">💡 Save to AI Notes</button>
             </div>
             <div class="ai-result" id="other-email-output"></div>
+            <p style="font-size:11px; color:#999; margin-top:10px; direction:ltr; text-align:left;">🤖 AI-generated - please double-check the translation/content before sending. This is here to help you, not to be relied on 100%.</p>
         </div>
     </div>
 </div>
@@ -272,9 +315,9 @@
     <!-- CUSTOMER SIDE -->
     <div class="card sub-section visible" id="side-customer">
         <div class="section-title">🗣️ Customer Side</div>
-        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">اكتب هنا الكلمة أو الجملة اللي قالهالك العميل بالألماني، وهنشرحلك معناها ونترجمها ونديك مثالين.</p>
+        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">Write the word or sentence the customer said to you in German, and get its meaning explained, translated, with two examples.</p>
         <label>What the customer said (German):</label>
-        <textarea id="cs-input" placeholder="اكتب هنا الجملة الألمانية اللي قالها العميل..." style="min-height:90px;"></textarea>
+        <textarea id="cs-input" placeholder="Write the German sentence the customer said here..." style="min-height:90px;"></textarea>
         <button class="btn btn-blue" onclick="generateCallSideCustomer(this)">🤖 Explain</button>
         <div class="result-area" id="cs-result">
             <div id="cs-output"></div>
@@ -284,9 +327,9 @@
     <!-- AGENT SIDE -->
     <div class="card sub-section" id="side-agent">
         <div class="section-title">🎧 Agent Side</div>
-        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">اكتب هنا اللي عايز تقوله للعميل بالعربي، وهنترجمهولك بالألماني بطريقتين مختلفتين.</p>
+        <p style="color:#888; font-size:12px; margin:0 0 8px 0;">Write what you want to say to the customer in Arabic, and get it translated into German in two different ways.</p>
         <label>What you want to say (Arabic):</label>
-        <textarea id="as-input" placeholder="اكتب هنا اللي عايز تقوله للعميل بالعربي..." style="min-height:90px;"></textarea>
+        <textarea id="as-input" placeholder="Write what you want to say to the customer in Arabic here..." style="min-height:90px;"></textarea>
         <button class="btn btn-blue" onclick="generateCallSideAgent(this)">🤖 Translate</button>
         <div class="result-area" id="as-result">
             <div id="as-output"></div>
@@ -312,13 +355,35 @@
     }
 
     function showEmailType(type) {
-        ['swap','issue','callval','other'].forEach(t => {
+        ['swap','issue','callval','offreq','other'].forEach(t => {
             document.getElementById('form-'+t).classList.remove('visible');
             document.getElementById('etype-'+t).classList.remove('active');
         });
         document.getElementById('form-'+type).classList.add('visible');
         document.getElementById('etype-'+type).classList.add('active');
     }
+
+    /* ===== PERSISTENT AGENT INFO (LOB / Name / CCMS) ===== */
+    function saveAgentInfo() {
+        const pin = localStorage.getItem('rashed_pin') || 'guest';
+        const info = {
+            lob: document.getElementById('agent-lob').value,
+            name: document.getElementById('agent-name').value.trim(),
+            ccms: document.getElementById('agent-ccms').value.trim()
+        };
+        localStorage.setItem('agent_info_' + pin, JSON.stringify(info));
+    }
+
+    function loadAgentInfo() {
+        const pin = localStorage.getItem('rashed_pin') || 'guest';
+        try {
+            const saved = JSON.parse(localStorage.getItem('agent_info_' + pin) || '{}');
+            if (saved.lob) document.getElementById('agent-lob').value = saved.lob;
+            if (saved.name) document.getElementById('agent-name').value = saved.name;
+            if (saved.ccms) document.getElementById('agent-ccms').value = saved.ccms;
+        } catch(e) {}
+    }
+    loadAgentInfo();
 
     function selectCallTypeAI(el, val) {
         document.querySelectorAll('#cv-type-group .pill-type').forEach(p => p.classList.remove('active'));
@@ -338,6 +403,11 @@
 
     function escapeHTML(s) {
         return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const AI_DISCLAIMER = '🤖 AI-generated - please double-check the translation/content before sending. This is here to help you, not to be relied on 100%.';
+    function aiDisclaimerHTML() {
+        return `<p style="font-size:11px; color:#999; margin-top:10px; direction:ltr; text-align:left;">${AI_DISCLAIMER}</p>`;
     }
 
     function extractJSON(raw) {
@@ -401,10 +471,11 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
             lastAIItems['cs-output'] = items;
             outputEl.innerHTML =
                 `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
-                    <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
+                    <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">Meaning</div>
                     <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
                 </div>` +
-                items.map((v,i) => itemCardHTML(v, i, 'cs-output', 'Example')).join('');
+                items.map((v,i) => itemCardHTML(v, i, 'cs-output', 'Example')).join('') +
+                aiDisclaimerHTML();
         } catch(e) {
             outputEl.innerHTML = `<span style="color:#c0272d;">⚠️ ${escapeHTML(e.message)}</span>`;
         }
@@ -433,7 +504,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
             const data = extractJSON(raw);
             const items = Array.isArray(data.variants) ? data.variants : [];
             lastAIItems['as-output'] = items;
-            outputEl.innerHTML = items.map((v,i) => itemCardHTML(v, i, 'as-output', 'Option')).join('');
+            outputEl.innerHTML = items.map((v,i) => itemCardHTML(v, i, 'as-output', 'Option')).join('') + aiDisclaimerHTML();
         } catch(e) {
             outputEl.innerHTML = `<span style="color:#c0272d;">⚠️ ${escapeHTML(e.message)}</span>`;
         }
@@ -488,7 +559,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
             } else if (data.type === 'de_to_ar') {
                 items = Array.isArray(data.examples) ? data.examples : [];
                 html = `<div style="background:#fff3cd; border:2px solid #f39c12; border-radius:10px; padding:12px; margin-bottom:10px; direction:rtl; text-align:right;">
-                            <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">المعنى</div>
+                            <div style="font-size:11px; color:#a67c00; font-weight:bold; margin-bottom:4px;">Meaning</div>
                             <div style="font-size:14px; color:#333;">${escapeHTML(data.meaning)}</div>
                         </div>` +
                         items.map((v,i) => itemCardHTML(v, i, 'tr-output', 'Example')).join('');
@@ -508,7 +579,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
             }
 
             lastAIItems['tr-output'] = items;
-            outputEl.innerHTML = html;
+            outputEl.innerHTML = html + aiDisclaimerHTML();
         } catch(e) {
             outputEl.innerHTML = `<span style="color:#c0272d;">⚠️ ${escapeHTML(e.message)}</span>`;
         }
@@ -562,17 +633,81 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
     }
 
     /* ===== SWAP REQUEST ===== */
+    /* ===== OFF / ANNUAL / SHIFT REQUEST ===== */
+    const OFFREQ_OPTIONS = ['Off', 'Annual', '8:30 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM'];
+    const OFFREQ_DAYS = [
+        { id: 'offreq-mon', label: 'Monday' },
+        { id: 'offreq-tue', label: 'Tuesday' },
+        { id: 'offreq-wed', label: 'Wednesday' },
+        { id: 'offreq-thu', label: 'Thursday' },
+        { id: 'offreq-fri', label: 'Friday' },
+        { id: 'offreq-sat', label: 'Saturday' },
+        { id: 'offreq-sun', label: 'Sunday' }
+    ];
+
+    function initOffReqSelects() {
+        OFFREQ_DAYS.forEach(day => {
+            const el = document.getElementById(day.id);
+            if (!el || el.options.length) return;
+            OFFREQ_OPTIONS.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt; o.textContent = opt;
+                el.appendChild(o);
+            });
+        });
+    }
+    initOffReqSelects();
+
+    function generateOffReq() {
+        const lob = document.getElementById('agent-lob').value;
+        const ccms = document.getElementById('agent-ccms').value.trim();
+        const name = document.getElementById('agent-name').value.trim();
+
+        if (!ccms || !name) {
+            alert('Please fill your info (LOB/Name/CCMS) at the top of the Email Assistant section first.'); return;
+        }
+
+        const cellStyle = tdStyle() + 'text-align:center; vertical-align:middle;';
+        const dayCells = OFFREQ_DAYS.map(day =>
+            `<td style="${cellStyle}">${document.getElementById(day.id).value}</td>`
+        ).join('');
+        const dayHeaders = OFFREQ_DAYS.map(day =>
+            `<th style="${thStyle()} text-align:center; vertical-align:middle;"><font color="#ffffff">${day.label}</font></th>`
+        ).join('');
+
+        const tableHTML = `<table border="1" cellpadding="10" cellspacing="0" style="${tableStyle()}">
+            <tr bgcolor="#1e3a7b">
+                <th style="${thStyle()} text-align:center; vertical-align:middle;"><font color="#ffffff">CCMS</font></th>
+                <th style="${thStyle()} text-align:center; vertical-align:middle;"><font color="#ffffff">Name</font></th>
+                <th style="${thStyle()} text-align:center; vertical-align:middle;"><font color="#ffffff">LOB</font></th>
+                ${dayHeaders}
+            </tr>
+            <tr bgcolor="#f5f6fb">
+                <td style="${cellStyle}">${ccms}</td>
+                <td style="${cellStyle}">${name}</td>
+                <td style="${cellStyle}">${lob}</td>
+                ${dayCells}
+            </tr>
+        </table>`;
+
+        document.getElementById('offreq-table-wrap').innerHTML = tableHTML;
+        document.getElementById('offreq-result').classList.add('visible');
+    }
+
     function generateSwap() {
-        const lob = document.getElementById('swap-lob').value;
-        const myCcms = document.getElementById('swap-my-ccms').value.trim();
+        const lob = document.getElementById('agent-lob').value;
+        const myCcms = document.getElementById('agent-ccms').value.trim();
+        const myName = document.getElementById('agent-name').value.trim();
         const colCcms = document.getElementById('swap-col-ccms').value.trim();
-        const myName = document.getElementById('swap-my-name').value.trim();
         const colName = document.getElementById('swap-col-name').value.trim();
         const myShift = document.getElementById('swap-my-shift').value.trim();
         const colShift = document.getElementById('swap-col-shift').value.trim();
         const dateVal = document.getElementById('swap-date').value;
 
-        if (!myCcms || !colCcms || !myName || !colName) {
+        if (!myCcms || !myName) {
+            alert('Please fill your info (LOB/Name/CCMS) at the top of the Email Assistant section first.'); return;
+        }
+        if (!colCcms || !colName) {
             alert('Please fill all fields.'); return;
         }
 
@@ -607,13 +742,16 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
 
     /* ===== SYSTEM ISSUE (FIXED) ===== */
     async function generateIssue() {
-        const ccms = document.getElementById('issue-ccms').value.trim();
-        const name = document.getElementById('issue-name').value.trim();
+        const ccms = document.getElementById('agent-ccms').value.trim();
+        const name = document.getElementById('agent-name').value.trim();
         const from = document.getElementById('issue-from').value;
         const to = document.getElementById('issue-to').value;
         const typeAr = document.getElementById('issue-type-ar').value.trim();
 
-        if (!ccms || !name || !from || !to || !typeAr) {
+        if (!ccms || !name) {
+            alert('Please fill your info (LOB/Name/CCMS) at the top of the Email Assistant section first.'); return;
+        }
+        if (!from || !to || !typeAr) {
             alert('Please fill all fields.'); return;
         }
 
@@ -642,7 +780,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
                 </tr>
             </table>`;
 
-            document.getElementById('issue-table-wrap').innerHTML = tableHTML;
+            document.getElementById('issue-table-wrap').innerHTML = tableHTML + aiDisclaimerHTML();
             document.getElementById('issue-result').classList.add('visible');
         } catch(e) {
             alert('⚠️ ' + e.message);
@@ -697,7 +835,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
                 ${rowsHTML}
             </table>`;
 
-            document.getElementById('cv-table-wrap').innerHTML = tableHTML;
+            document.getElementById('cv-table-wrap').innerHTML = tableHTML + aiDisclaimerHTML();
             document.getElementById('cv-result').classList.add('visible');
         } catch(e) {
             alert('⚠️ ' + e.message);
@@ -830,7 +968,6 @@ Arabic text: "${text}"`
         <h2>📧 ${subject}</h2>
         <div class="hint">💡 <b>How to copy:</b> Click inside the table → Press Ctrl+A → Press Ctrl+C → Paste in Roundcube email body.</div>
         ${el.outerHTML}
-        <p style="margin-top:16px;color:#555;font-size:13px;">Thank you for your cooperation.</p>
         </body></html>`;
         const blob = new Blob([html], {type:'text/html'});
         const url = URL.createObjectURL(blob);
@@ -858,3 +995,4 @@ Arabic text: "${text}"`
 </script>
 </body>
 </html>
+

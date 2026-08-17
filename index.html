@@ -268,7 +268,7 @@
         <div class="popup-box" onclick="event.stopPropagation()">
             <div style="font-size:48px; margin-bottom:10px;">🎉</div>
             <h2 style="color:#1e3a7b; margin:0 0 8px 0;">Shift Complete!</h2>
-            <p style="color:#555; font-size:14px; margin:0 0 16px 0;">عاش يا بطل! الشيفت خلص — استاحة ومبروك على يومك! 💪</p>
+            <p style="color:#555; font-size:14px; margin:0 0 16px 0;">شيفتك خلص، أحسنت! يلا روّح وارتاح، وياريت يومك يكون سعيد ومريح 🌙✨</p>
             <button onclick="closeShiftPopup()" style="padding:10px 24px; background:#1e3a7b; color:white; border:none; border-radius:20px; font-size:14px; font-weight:bold; cursor:pointer;">✅ OK</button>
         </div>
     </div>
@@ -1915,7 +1915,7 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
         function openAINotes() {
             document.getElementById('ai-notes-editor').style.display = 'block';
-            const pin = getCurrentPin();
+         const pin = getCurrentPin();
             const saved = localStorage.getItem('ai_notes_' + pin) || '';
             document.getElementById('ai-notes-content').value = saved;
         }

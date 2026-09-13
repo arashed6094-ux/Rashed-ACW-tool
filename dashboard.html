@@ -96,6 +96,22 @@
             <button onclick="loadChart()" style="padding:7px 18px; background:#1e3a7b; color:white; border:none; border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer;">▶ Show</button>
         </div>
 
+        <!-- Compare same weekday across weeks -->
+        <div id="weekday-compare-wrap" style="display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label style="font-size:13px; color:#1e3a7b; font-weight:bold;">
+                <input type="checkbox" id="compare-weekday-toggle" onchange="toggleWeekdayCompare()"> 🔁 Compare same weekday
+            </label>
+            <select id="weekday-picker" style="display:none;" onchange="loadChart()">
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+            </select>
+        </div>
+
         <!-- Data toggle -->
         <div>
             <button class="pill-btn active" id="btn-both" onclick="setData('both')">Combined</button>
@@ -104,6 +120,7 @@
         </div>
     </div>
 
+    <div id="chart-title" style="text-align:center; font-weight:bold; color:#1e3a7b; font-size:13px; margin-bottom:8px;"></div>
     <div class="chart-wrap">
         <canvas id="mainChart"></canvas>
     </div>
@@ -119,6 +136,7 @@
 
     let currentRange = 'week';
     let currentData  = 'both';
+    let compareWeekday = false;
     let chart = null;
 
     // ── helpers ──────────────────────────────────────────────
@@ -152,10 +170,10 @@
         let labels = [], ordersData = [], serviceData = [];
 
         if (currentRange === 'week' || currentRange === 'month' || currentRange === 'custom') {
-            let fromStr, days;
+            let fromStr, days, toStr;
             if (currentRange === 'custom') {
                 fromStr = document.getElementById('range-from').value;
-                const toStr = document.getElementById('range-to').value;
+                toStr = document.getElementById('range-to').value;
                 if (!fromStr || !toStr) return;
                 const fromD = new Date(fromStr);
                 const toD   = new Date(toStr);
@@ -166,6 +184,7 @@
                 const from = getEgyptNow();
                 from.setDate(from.getDate() - days + 1);
                 fromStr = egyptDateStr(from);
+                toStr = egyptDateStr(getEgyptNow());
             }
             const from = new Date(fromStr);
 
@@ -180,19 +199,33 @@
                 map[r.day][r.stat_key] = (map[r.day][r.stat_key] || 0) + r.count;
             });
 
-            // fill all days
+            // fill days (optionally filtered to a single weekday for comparison mode)
+            const weekdayFilter = compareWeekday ? parseInt(document.getElementById('weekday-picker').value, 10) : null;
             for (let i = 0; i < days; i++) {
                 const d = new Date(fromStr);
                 d.setDate(new Date(fromStr).getDate() + i);
+                if (weekdayFilter !== null && d.getDay() !== weekdayFilter) continue;
                 const key = d.toISOString().slice(0,10);
-                const label = d.toLocaleDateString([], {weekday:'short', day:'2-digit', month:'2-digit'});
+                const label = weekdayFilter !== null
+                    ? d.toLocaleDateString([], {day:'2-digit', month:'2-digit', year:'2-digit'})
+                    : d.toLocaleDateString([], {weekday:'short', day:'2-digit', month:'2-digit'});
                 labels.push(label);
                 ordersData.push(map[key]?.versandkosten || 0);
                 serviceData.push(map[key]?.vorlagen     || 0);
             }
 
+            // chart title
+            const titleEl = document.getElementById('chart-title');
+            if (weekdayFilter !== null) {
+                const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                titleEl.textContent = `🔁 Comparing every ${dayNames[weekdayFilter]} from ${fromStr} to ${toStr} (${labels.length} occurrences)`;
+            } else {
+                titleEl.textContent = '';
+            }
+
         } else {
             // by hour for selected day
+            document.getElementById('chart-title').textContent = '';
             const day = document.getElementById('day-picker').value || egyptDateStr(getEgyptNow());
             const rows = await sbFetch(
                 `hourly_stats?select=stat_key,hour,count&day=eq.${day}&order=hour.asc`
@@ -315,7 +348,14 @@
         });
         document.getElementById('day-picker').style.display = r === 'day' ? 'inline-block' : 'none';
         document.getElementById('custom-range-picker').style.display = r === 'custom' ? 'flex' : 'none';
+        document.getElementById('weekday-compare-wrap').style.display = r === 'day' ? 'none' : 'flex';
         if (r !== 'custom') loadChart();
+    }
+
+    function toggleWeekdayCompare() {
+        compareWeekday = document.getElementById('compare-weekday-toggle').checked;
+        document.getElementById('weekday-picker').style.display = compareWeekday ? 'inline-block' : 'none';
+        loadChart();
     }
 
     function setData(d) {

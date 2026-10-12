@@ -1750,17 +1750,12 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             msg.style.color = '#888';
             msg.textContent = 'Checking...';
             try {
-                const res = await fetch(`${SB_URL}/rest/v1/rpc/login_with_pin`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ input_pin: pin })
+                const res = await fetch(`${SB_USERS_URL}?pin=eq.${encodeURIComponent(pin)}&select=pin,username`, {
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
                 });
-                const rows = await res.json();
-                if (Array.isArray(rows) && rows.length > 0) {
-                    currentUser = { pin, username: rows[0].username };
+                const users = await res.json();
+                if (Array.isArray(users) && users.length > 0) {
+                    currentUser = users[0];
                     localStorage.setItem('rashed_pin', pin);
                     localStorage.setItem('rashed_username', currentUser.username);
                     showApp();
@@ -1789,23 +1784,25 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             msg.style.display='block'; msg.style.color='#888';
             msg.textContent = 'Creating account...';
             try {
-                const res = await fetch(`${SB_URL}/rest/v1/rpc/register_user`, {
+                const res = await fetch(SB_USERS_URL, {
                     method: 'POST',
                     headers: {
                         'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({ input_pin: pin, input_username: name })
+                    body: JSON.stringify({ pin, username: name })
                 });
-                const success = await res.json();
-                if (success === true) {
+                if (res.ok || res.status === 201) {
                     currentUser = { pin, username: name };
                     localStorage.setItem('rashed_pin', pin);
                     localStorage.setItem('rashed_username', name);
                     showApp();
-                } else {
+                } else if (res.status === 409) {
                     msg.style.color='#c0272d';
                     msg.textContent = '❌ PIN already exists. Choose a different one.';
+                } else {
+                    msg.style.color='#c0272d';
+                    msg.textContent = '❌ Error creating account.';
                 }
             } catch(e) {
                 msg.style.color='#c0272d';
@@ -1895,4 +1892,6 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
             // Auto-save on typing
             const ta = document.getElementById('note-content-area');
-        
+            ta.oninput = () => {
+                clearTimeout(autoSaveTimer);
+            

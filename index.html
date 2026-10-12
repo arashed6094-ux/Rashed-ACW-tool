@@ -84,7 +84,7 @@
 
         .copy-btn { margin-top: 8px; padding: 7px 16px; background: #c0272d; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; float: left; transition: background 0.2s; }
         .copy-btn:hover { background: #a01f24; }
-        .copy-btn.copied { background: #555; }
+        .copy-btn.copied { background: #555; animation: badgePop 0.3s ease; }
         .reset-btn { margin-top: 8px; margin-left: 8px; padding: 7px 13px; background: white; color: #888; border: 2px solid #ccc; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; float: left; transition: all 0.2s; }
         .reset-btn:hover { background: #f5f5f5; border-color: #999; color: #444; }
         .clearfix { clear: both; }
@@ -145,6 +145,37 @@
             max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: popIn 0.4s ease;
         }
         @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes toastIn { from { opacity:0; transform:translate(-50%, 16px); } to { opacity:1; transform:translate(-50%, 0); } }
+        @keyframes badgePop { 0% { transform:scale(0); } 60% { transform:scale(1.15); } 100% { transform:scale(1); } }
+
+        .content-card.visible, .sub-level.visible { animation: fadeSlideIn 0.35s ease; }
+        .pill, button, .copy-btn, .reset-btn, button.main-btn {
+            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+        .pill:active, button:active, .copy-btn:active, .reset-btn:active, button.main-btn:active { transform:scale(0.96); }
+        .pill:hover { box-shadow:0 4px 12px rgba(30,58,123,0.2); }
+
+        .spinner-dot { display:inline-block; width:13px; height:13px; border:2px solid rgba(30,58,123,0.25);
+            border-top-color:#1e3a7b; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+
+        .stagger-item { opacity:0; animation: fadeSlideIn 0.4s ease forwards; }
+
+        #toast-container { position:fixed; bottom:24px; left:50%; z-index:100000;
+            display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+        .toast { padding:10px 20px; border-radius:30px; font-size:13px; font-weight:bold;
+            box-shadow:0 6px 20px rgba(0,0,0,0.25); color:white; animation:toastIn 0.3s ease;
+            white-space:nowrap; max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration:0.01ms !important; animation-iteration-count:1 !important;
+                transition-duration:0.01ms !important; scroll-behavior:auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -895,6 +926,42 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
     </div>
 
     <script>
+        /* ===== UI HELPERS: toast notifications + count-up animation ===== */
+        function showToast(message, type) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const colors = { success: '#1e3a7b', error: '#c0272d' };
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = colors[type] || colors.success;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function animateCountUp(el, target) {
+            const start = parseInt(el.textContent, 10) || 0;
+            if (start === target) { el.textContent = target; return; }
+            const duration = 700;
+            const startTime = performance.now();
+            function tick(now) {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
         /* ===== AHT TOOL ===== */
 
         // Auto-format Talk Time as MM:SS
@@ -1241,16 +1308,19 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
                     ['🚚 Versandkosten Used',    d['used_versandkosten'] ?? 0],
                     ['📋 Vorlagen Opened',       d['used_vorlagen'] ?? 0],
                 ];
-                tbody.innerHTML = metrics.map((m) => `
-                    <div style="
+                tbody.innerHTML = metrics.map((m, idx) => `
+                    <div class="stagger-item" style="
                         background:#f5f6fb; border-radius:10px; padding:12px 16px;
                         display:flex; justify-content:space-between; align-items:center;
-                        border-left:4px solid #1e3a7b;
+                        border-left:4px solid #1e3a7b; animation-delay:${idx*0.06}s;
                     ">
-                        <span style="font-weight:bold; color:#1e3a7b; font-size:20px; margin-right:10px;">${m[1]}</span>
+                        <span class="stat-num" data-target="${m[1]}" style="font-weight:bold; color:#1e3a7b; font-size:20px; margin-right:10px;">0</span>
                         <span style="color:#333; font-size:13px;">${m[0]}</span>
                     </div>
                 `).join('');
+                document.querySelectorAll('.stat-num').forEach(el => {
+                    animateCountUp(el, parseInt(el.dataset.target, 10) || 0);
+                });
             } catch(e) {
                 document.getElementById('stats-tbody').innerHTML =
                     '<tr><td colspan="2" style="padding:10px; color:#c0272d; text-align:center;">Could not load stats</td></tr>';
@@ -1680,12 +1750,17 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             msg.style.color = '#888';
             msg.textContent = 'Checking...';
             try {
-                const res = await fetch(`${SB_USERS_URL}?pin=eq.${encodeURIComponent(pin)}&select=pin,username`, {
-                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                const res = await fetch(`${SB_URL}/rest/v1/rpc/login_with_pin`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input_pin: pin })
                 });
-                const users = await res.json();
-                if (users.length > 0) {
-                    currentUser = users[0];
+                const rows = await res.json();
+                if (Array.isArray(rows) && rows.length > 0) {
+                    currentUser = { pin, username: rows[0].username };
                     localStorage.setItem('rashed_pin', pin);
                     localStorage.setItem('rashed_username', currentUser.username);
                     showApp();
@@ -1714,25 +1789,23 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             msg.style.display='block'; msg.style.color='#888';
             msg.textContent = 'Creating account...';
             try {
-                const res = await fetch(SB_USERS_URL, {
+                const res = await fetch(`${SB_URL}/rest/v1/rpc/register_user`, {
                     method: 'POST',
                     headers: {
                         'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ pin, username: name })
+                    body: JSON.stringify({ input_pin: pin, input_username: name })
                 });
-                if (res.ok || res.status === 201) {
+                const success = await res.json();
+                if (success === true) {
                     currentUser = { pin, username: name };
                     localStorage.setItem('rashed_pin', pin);
                     localStorage.setItem('rashed_username', name);
                     showApp();
-                } else if (res.status === 409) {
-                    msg.style.color='#c0272d';
-                    msg.textContent = '❌ PIN already exists. Choose a different one.';
                 } else {
                     msg.style.color='#c0272d';
-                    msg.textContent = '❌ Error creating account.';
+                    msg.textContent = '❌ PIN already exists. Choose a different one.';
                 }
             } catch(e) {
                 msg.style.color='#c0272d';
@@ -1822,117 +1895,4 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
 
             // Auto-save on typing
             const ta = document.getElementById('note-content-area');
-            ta.oninput = () => {
-                clearTimeout(autoSaveTimer);
-                document.getElementById('note-save-status').textContent = 'Unsaved...';
-                autoSaveTimer = setTimeout(saveCurrentNote, 2000);
-            };
-        }
-
-        async function saveCurrentNote() {
-            if (!currentNoteId) return;
-            const content = document.getElementById('note-content-area').value;
-            const pin = getCurrentPin();
-            try {
-                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ content, updated_at: new Date().toISOString() })
-                });
-                document.getElementById('note-save-status').textContent = 'Saved ✓ ' + new Date().toLocaleTimeString();
-            } catch(e) {}
-        }
-
-        async function addNewNoteFile() {
-            const name = prompt('Note file name:');
-            if (!name || !name.trim()) return;
-            const pin = getCurrentPin();
-            try {
-                await fetch(SB_UNOTES_URL, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({ user_pin: pin, note_name: name.trim(), content: '' })
-                });
-                await loadNoteFiles();
-            } catch(e) {}
-        }
-
-        async function deleteCurrentNote() {
-            if (!currentNoteId || !confirm('Delete this note?')) return;
-            const pin = getCurrentPin();
-            try {
-                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
-                    method: 'DELETE',
-                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
-                });
-                closeNoteEditor();
-                await loadNoteFiles();
-            } catch(e) {}
-        }
-
-        function closeNoteEditor() {
-            currentNoteId = null;
-            currentNoteName = null;
-            document.getElementById('note-editor').style.display = 'none';
-            document.getElementById('note-content-area').value = '';
-        }
-
-        async function renameCurrentNote() {
-            if (!currentNoteId) return;
-            const newName = prompt('New note name:', currentNoteName || '');
-            if (!newName || !newName.trim() || newName.trim() === currentNoteName) return;
-            const pin = getCurrentPin();
-            try {
-                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ note_name: newName.trim(), updated_at: new Date().toISOString() })
-                });
-                currentNoteName = newName.trim();
-                document.getElementById('current-note-name').textContent = '📄 ' + currentNoteName;
-                await loadNoteFiles();
-            } catch(e) {}
-        }
-
-        function saveToAINotes() {
-            const text = document.getElementById('note-content-area').value;
-            if (!text.trim()) return;
-            openAINotes();
-            const aiArea = document.getElementById('ai-notes-content');
-            const timestamp = new Date().toLocaleString();
-            aiArea.value += `\n--- Saved ${timestamp} ---\n${text}\n`;
-            saveAINotesContent();
-        }
-
-        function openAINotes() {
-            document.getElementById('ai-notes-editor').style.display = 'block';
-         const pin = getCurrentPin();
-            const saved = localStorage.getItem('ai_notes_' + pin) || '';
-            document.getElementById('ai-notes-content').value = saved;
-        }
-
-        function saveAINotesContent() {
-            const pin = getCurrentPin();
-            const content = document.getElementById('ai-notes-content').value;
-            localStorage.setItem('ai_notes_' + pin, content);
-        }
-
-        /* ===== RESET ===== */
-        function resetVorlage(btn) {
-            const fieldGroup = btn.closest('.field-group');
-            const ta = fieldGroup.querySelector('.vorlage-box');
-            ta.value = ta.getAttribute('data-original');
-            autoResize(ta);
-        }
-    </script>
-</body>
-</html>
+        

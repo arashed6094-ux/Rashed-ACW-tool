@@ -54,6 +54,22 @@
             background:#1e3a7b; color:white; border:none; border-radius:20px;
             font-size:13px; font-weight:bold; cursor:pointer; text-decoration:none;
         }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .card { animation: fadeSlideIn 0.4s ease; }
+        .summary-box { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .summary-box:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(30,58,123,0.15); }
+        .pill-btn, .back-btn { transition: transform 0.15s ease, background 0.2s ease; }
+        .pill-btn:active, .back-btn:active { transform:scale(0.96); }
+        .chart-wrap { animation: fadeSlideIn 0.4s ease; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration:0.01ms !important; animation-iteration-count:1 !important;
+                transition-duration:0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -155,14 +171,29 @@
     }
 
     // ── summary ───────────────────────────────────────────────
+    function animateCountUp(el, target) {
+        const current = parseInt(el.textContent, 10);
+        const start = isNaN(current) ? 0 : current;
+        if (start === target) { el.textContent = target; return; }
+        const duration = 700;
+        const startTime = performance.now();
+        function tick(now) {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(start + (target - start) * eased);
+            if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
     async function loadSummary() {
         const rows = await sbFetch('stats?select=key,value');
         const d = {};
         rows.forEach(r => d[r.key] = r.value);
-        document.getElementById('s-total').textContent   = d['visits_total']       ?? 0;
-        document.getElementById('s-today').textContent   = d['visits_today']       ?? 0;
-        document.getElementById('s-orders').textContent  = d['used_versandkosten'] ?? 0;
-        document.getElementById('s-service').textContent = d['used_vorlagen']      ?? 0;
+        animateCountUp(document.getElementById('s-total'),   d['visits_total']       ?? 0);
+        animateCountUp(document.getElementById('s-today'),   d['visits_today']       ?? 0);
+        animateCountUp(document.getElementById('s-orders'),  d['used_versandkosten'] ?? 0);
+        animateCountUp(document.getElementById('s-service'), d['used_vorlagen']      ?? 0);
     }
 
     // ── chart data ────────────────────────────────────────────

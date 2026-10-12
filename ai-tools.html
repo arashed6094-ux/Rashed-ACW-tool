@@ -82,6 +82,43 @@
         @media (max-width:500px) {
             .pill { font-size:13px; padding:8px 16px; }
         }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes toastIn { from { opacity:0; transform:translate(-50%, 16px); } to { opacity:1; transform:translate(-50%, 0); } }
+        @keyframes popCheck { 0% { transform:scale(0.6); opacity:0; } 60% { transform:scale(1.15); } 100% { transform:scale(1); opacity:1; } }
+
+        .sub-section.visible, .card { animation: fadeSlideIn 0.35s ease; }
+        .pill, .pill-type, button, .btn, .copy-html-btn, .save-ai-btn {
+            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+        .pill:active, .pill-type:active, button:active, .btn:active,
+        .copy-html-btn:active, .save-ai-btn:active { transform:scale(0.96); }
+
+        .btn:hover:not(:disabled), .copy-html-btn:hover, .save-ai-btn:hover {
+            box-shadow:0 4px 14px rgba(30,58,123,0.25); transform:translateY(-1px);
+        }
+
+        .spinner-dot { display:inline-block; width:13px; height:13px; border:2px solid rgba(30,58,123,0.25);
+            border-top-color:#1e3a7b; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+
+        .stagger-item { opacity:0; animation: fadeSlideIn 0.4s ease forwards; }
+
+        .result-area.visible { animation: fadeSlideIn 0.4s ease; }
+
+        #toast-container { position:fixed; bottom:24px; left:50%; z-index:100000;
+            display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+        .toast { padding:10px 20px; border-radius:30px; font-size:13px; font-weight:bold;
+            box-shadow:0 6px 20px rgba(0,0,0,0.25); color:white; animation:toastIn 0.3s ease;
+            white-space:nowrap; max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration:0.01ms !important; animation-iteration-count:1 !important;
+                transition-duration:0.01ms !important; scroll-behavior:auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -405,6 +442,27 @@
         return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
+    function showToast(message, type) {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const colors = { success: '#1e3a7b', error: '#c0272d' };
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.background = colors[type] || colors.success;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
     const AI_DISCLAIMER = '🤖 AI-generated - please double-check the translation/content before sending. This is here to help you, not to be relied on 100%.';
     function aiDisclaimerHTML() {
         return `<p style="font-size:11px; color:#999; margin-top:10px; direction:ltr; text-align:left;">${AI_DISCLAIMER}</p>`;
@@ -421,7 +479,7 @@
     let lastAIItems = {};
 
     function itemCardHTML(v, i, outputId, label) {
-        return `<div style="background:#f5f6fb; border:2px solid #1e3a7b; border-radius:10px; padding:12px; margin-bottom:10px;">
+        return `<div class="stagger-item" style="background:#f5f6fb; border:2px solid #1e3a7b; border-radius:10px; padding:12px; margin-bottom:10px; animation-delay:${i*0.1}s;">
             <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:4px; direction:ltr; text-align:left;">${label} ${i+1}</div>
             <div style="font-size:14px; color:#1e3a7b; font-weight:bold; margin-bottom:6px; direction:ltr; text-align:left;">${escapeHTML(v.de)}</div>
             <div style="font-size:13px; color:#555; direction:rtl; text-align:right; margin-bottom:8px;">${escapeHTML(v.ar)}</div>
@@ -444,7 +502,7 @@
         const timestamp = new Date().toLocaleString();
         const existing = localStorage.getItem(key) || '';
         localStorage.setItem(key, existing + `\n\n--- #${count} · ${timestamp} ---\n` + text);
-        alert('✅ Saved to AI Notes!');
+        showToast('✅ Saved to AI Notes!');
     }
 
     // --- Customer Side: what the customer said in German -> meaning + translation + 2 examples ---
@@ -454,7 +512,7 @@
 
         btn.textContent = '⏳ Explaining...'; btn.disabled = true;
         const outputEl = document.getElementById('cs-output');
-        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        outputEl.innerHTML = '<span class="loading"><span class="spinner-dot"></span>Generating...</span>';
         document.getElementById('cs-result').classList.add('visible');
 
         const prompt = `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
@@ -489,7 +547,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
 
         btn.textContent = '⏳ Translating...'; btn.disabled = true;
         const outputEl = document.getElementById('as-output');
-        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        outputEl.innerHTML = '<span class="loading"><span class="spinner-dot"></span>Generating...</span>';
         document.getElementById('as-result').classList.add('visible');
 
         const prompt = `You are a bilingual (Arabic/German) assistant for a German-language customer service call center agent.
@@ -518,7 +576,7 @@ Respond with ONLY raw JSON, no markdown fences, no extra text, in exactly this s
 
         btn.textContent = '⏳ Translating...'; btn.disabled = true;
         const outputEl = document.getElementById('tr-output');
-        outputEl.innerHTML = '<span class="loading">Generating...</span>';
+        outputEl.innerHTML = '<span class="loading"><span class="spinner-dot"></span>Generating...</span>';
         document.getElementById('tr-result').classList.add('visible');
 
         const isArabic = /[\u0600-\u06FF]/.test(text);
@@ -884,7 +942,7 @@ Arabic text: "${text}"`
         const el = document.getElementById(containerId);
         const ok = selectAndCopy(el);
         if (ok) {
-            alert('✅ Copied! Now paste it in Roundcube email body.');
+            showToast('✅ Copied! Paste it in Roundcube.');
         } else {
             alert('⚠️ Could not copy automatically on this browser. Opening the table in a new tab instead - select all (Ctrl+A) then copy (Ctrl+C) from there.');
             openTableInNewTab(containerId, 'Table');
@@ -910,7 +968,7 @@ Arabic text: "${text}"`
         const text = document.getElementById(elId).textContent;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('✅ Copied!');
+                showToast('✅ Copied!');
             }).catch(() => {
                 copyTextFallback(text);
             });
@@ -929,7 +987,8 @@ Arabic text: "${text}"`
         ta.select();
         const ok = document.execCommand('copy');
         document.body.removeChild(ta);
-        alert(ok ? (successMsg || '✅ Copied!') : '⚠️ Could not copy automatically - please select and copy the text manually.');
+        if (ok) { showToast(successMsg || '✅ Copied!'); }
+        else { alert('⚠️ Could not copy automatically - please select and copy the text manually.'); }
     }
 
     // Last-resort option for machines where even plain formatted copy/paste strips
@@ -981,7 +1040,7 @@ Arabic text: "${text}"`
         const timestamp = new Date().toLocaleString();
         const existing = localStorage.getItem('ai_notes_' + pin) || '';
         localStorage.setItem('ai_notes_' + pin, existing + `\n\n--- Saved ${timestamp} ---\n` + text);
-        alert('✅ Saved to AI Notes!');
+        showToast('✅ Saved to AI Notes!');
     }
 
     function saveTextToAINotes(elId) {
@@ -990,7 +1049,7 @@ Arabic text: "${text}"`
         const timestamp = new Date().toLocaleString();
         const existing = localStorage.getItem('ai_notes_' + pin) || '';
         localStorage.setItem('ai_notes_' + pin, existing + `\n\n--- Saved ${timestamp} ---\n` + text);
-        alert('✅ Saved to AI Notes!');
+        showToast('✅ Saved to AI Notes!');
     }
 </script>
 </body>

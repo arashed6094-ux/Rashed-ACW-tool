@@ -1894,4 +1894,121 @@ Kontakt für Rückfragen: Tel. / E-Mail XXXXX.</textarea>
             const ta = document.getElementById('note-content-area');
             ta.oninput = () => {
                 clearTimeout(autoSaveTimer);
-            
+                document.getElementById('note-save-status').textContent = 'Unsaved...';
+                autoSaveTimer = setTimeout(saveCurrentNote, 2000);
+            };
+        }
+
+        async function saveCurrentNote() {
+            if (!currentNoteId) return;
+            const content = document.getElementById('note-content-area').value;
+            const pin = getCurrentPin();
+            try {
+                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content, updated_at: new Date().toISOString() })
+                });
+                const statusEl = document.getElementById('note-save-status');
+                statusEl.textContent = 'Saved ✓ ' + new Date().toLocaleTimeString();
+                statusEl.style.animation = 'none';
+                void statusEl.offsetWidth; // restart animation
+                statusEl.style.animation = 'badgePop 0.3s ease';
+            } catch(e) {}
+        }
+
+        async function addNewNoteFile() {
+            const name = prompt('Note file name:');
+            if (!name || !name.trim()) return;
+            const pin = getCurrentPin();
+            try {
+                await fetch(SB_UNOTES_URL, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ user_pin: pin, note_name: name.trim(), content: '' })
+                });
+                await loadNoteFiles();
+                showToast('✅ Note created!');
+            } catch(e) {}
+        }
+
+        async function deleteCurrentNote() {
+            if (!currentNoteId || !confirm('Delete this note?')) return;
+            const pin = getCurrentPin();
+            try {
+                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                });
+                closeNoteEditor();
+                await loadNoteFiles();
+                showToast('🗑️ Note deleted');
+            } catch(e) {}
+        }
+
+        function closeNoteEditor() {
+            currentNoteId = null;
+            currentNoteName = null;
+            document.getElementById('note-editor').style.display = 'none';
+            document.getElementById('note-content-area').value = '';
+        }
+
+        async function renameCurrentNote() {
+            if (!currentNoteId) return;
+            const newName = prompt('New note name:', currentNoteName || '');
+            if (!newName || !newName.trim() || newName.trim() === currentNoteName) return;
+            const pin = getCurrentPin();
+            try {
+                await fetch(`${SB_UNOTES_URL}?id=eq.${currentNoteId}&user_pin=eq.${pin}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ note_name: newName.trim(), updated_at: new Date().toISOString() })
+                });
+                currentNoteName = newName.trim();
+                document.getElementById('current-note-name').textContent = '📄 ' + currentNoteName;
+                await loadNoteFiles();
+            } catch(e) {}
+        }
+
+        function saveToAINotes() {
+            const text = document.getElementById('note-content-area').value;
+            if (!text.trim()) return;
+            openAINotes();
+            const aiArea = document.getElementById('ai-notes-content');
+            const timestamp = new Date().toLocaleString();
+            aiArea.value += `\n--- Saved ${timestamp} ---\n${text}\n`;
+            saveAINotesContent();
+        }
+
+        function openAINotes() {
+            document.getElementById('ai-notes-editor').style.display = 'block';
+            const pin = getCurrentPin();
+            const saved = localStorage.getItem('ai_notes_' + pin) || '';
+            document.getElementById('ai-notes-content').value = saved;
+        }
+
+        function saveAINotesContent() {
+            const pin = getCurrentPin();
+            const content = document.getElementById('ai-notes-content').value;
+            localStorage.setItem('ai_notes_' + pin, content);
+        }
+
+        /* ===== RESET ===== */
+        function resetVorlage(btn) {
+            const fieldGroup = btn.closest('.field-group');
+            const ta = fieldGroup.querySelector('.vorlage-box');
+            ta.value = ta.getAttribute('data-original');
+            autoResize(ta);
+        }
+    </script>
+</body>
+</html>
